@@ -7,7 +7,7 @@ urlpatterns = [
     # Auth (login / logout / refresh)
     path('auth/', include('apps.users.auth_urls')),
 
-    # User profile + management (me, change-password, restaurant-admins)
+    # User profile + account management
     path('users/', include('apps.users.urls')),
 
     # Notifications
@@ -16,7 +16,7 @@ urlpatterns = [
     # API schema and documentation
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('redoc/', SpectacularRedocView.as_view(url_name='redoc'), name='redoc'),
+    path('redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
 if settings.DEBUG:

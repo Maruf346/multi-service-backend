@@ -1,9 +1,9 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import SAFE_METHODS, BasePermission
+
+from .models import UserRole
 
 
 class IsSuperAdmin(BasePermission):
-    """Allow access only to SUPER_ADMIN users."""
-
     message = 'You must be a Super Admin to perform this action.'
 
     def has_permission(self, request, view):
@@ -14,19 +14,34 @@ class IsSuperAdmin(BasePermission):
         )
 
 
-class IsSuperAdminOrReadOnly(BasePermission):
-    """
-    Allow Super Admins full CRUD.
-    Allow authenticated Restaurant Admins read-only access.
-    """
+class IsServiceProvider(BasePermission):
+    message = 'You must be a service provider to perform this action.'
 
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == UserRole.SERVICE_PROVIDER
+        )
+
+
+class IsCustomer(BasePermission):
+    message = 'You must be a customer to perform this action.'
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == UserRole.CUSTOMER
+        )
+
+
+class IsSuperAdminOrReadOnly(BasePermission):
     message = 'Write access requires Super Admin privileges.'
 
     def has_permission(self, request, view):
         if not (request.user and request.user.is_authenticated):
             return False
-        # Safe methods available to all authenticated users
-        if request.method in ('GET', 'HEAD', 'OPTIONS'):
+        if request.method in SAFE_METHODS:
             return True
         return request.user.is_super_admin
-

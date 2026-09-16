@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-&4rvu@nh8c#ky3%0g!8#k@i(d$8w(+#$gj_@$c#jj--c5e6fid')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
@@ -80,7 +80,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
-# ASGI_APPLICATION = 'core.asgi.application'
+ASGI_APPLICATION = 'core.asgi.application'
 
 
 # SECURITY SETTINGS FOR PRODUCTION
@@ -94,7 +94,7 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF  = True
     X_FRAME_OPTIONS              = "DENY"
     # Only enable HSTS after SSL is confirmed working
-    # Uncomment these AFTER you have SSL set up — wrong HSTS can lock out your site
+    # Uncomment these AFTER you have SSL set up - wrong HSTS can lock out your site
     # SECURE_HSTS_SECONDS          = 31536000
     # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     # SECURE_HSTS_PRELOAD          = True
@@ -152,11 +152,11 @@ if DB_ENGINE == 'django.db.backends.sqlite3':
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db_volume' / 'db.sqlite3',
-            # Stored in the named Docker volume → survives image rebuilds
+            # Stored in the named Docker volume - survives image rebuilds
         }
     }
 else:
-    # Production (PostgreSQL on AWS RDS) — just flip env vars, no code change needed
+    # Production (PostgreSQL on AWS RDS) - just flip env vars, no code change needed
     DATABASES = {
         'default': {
             'ENGINE': DB_ENGINE,
@@ -240,17 +240,17 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 USE_S3_MEDIA = os.getenv('USE_S3_MEDIA', 'False') == 'True'
 
 if USE_S3_MEDIA:
-    # S3 media storage — production only
+    # S3 media storage - production only
     AWS_ACCESS_KEY_ID       = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY   = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'plumbers-media')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'multi-service-media')
     AWS_S3_REGION_NAME      = os.getenv('AWS_S3_REGION_NAME', 'eu-north-1')
     AWS_S3_CUSTOM_DOMAIN    = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
     AWS_QUERYSTRING_AUTH    = False
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',  # 1 day cache on media files
     }
-    # ← REMOVED: AWS_DEFAULT_ACL = 'public-read'
+    # REMOVED: AWS_DEFAULT_ACL = 'public-read'
 
     MEDIA_URL  = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
     MEDIA_ROOT = ''  # Not used when S3 is active
@@ -263,8 +263,8 @@ if USE_S3_MEDIA:
                 "region_name": AWS_S3_REGION_NAME,
                 "location": "media",        # all uploads go into /media/ prefix in the bucket
                 "querystring_auth": False,
-                "file_overwrite": False,    # never overwrite existing files — add suffix instead
-                # ← REMOVED: "default_acl": "public-read",
+                "file_overwrite": False,    # never overwrite existing files - add suffix instead
+                # REMOVED: "default_acl": "public-read",
             },
         },
         "staticfiles": {
@@ -272,7 +272,7 @@ if USE_S3_MEDIA:
         },
     }
 else:
-    # Local development — use local filesystem
+    # Local development - use local filesystem
     MEDIA_URL  = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -332,7 +332,7 @@ REST_FRAMEWORK = {
 # drf-spectacular settings
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Multi-Service API',
-    'DESCRIPTION': 'API for Multi-Service — Food Ordering, Ride Services, Courier Services, Rental Services, Room Booking Services.',
+    'DESCRIPTION': 'API for Multi-Service: food delivery, ride sharing, courier delivery, car rental, and property booking.',
     'VERSION': '1.1.0',
     'TERMS_OF_SERVICE': 'https://www.google.com/policies/terms/',
     'CONTACT': {'email': 'maruf.bshs@gmail.com'},
@@ -417,7 +417,7 @@ CELERY_TASK_TRACK_STARTED = True  # Celery tracks when a task starts executing.
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 
 
-# ── And the Redis cache section ───────────────────────────────────────────
+# - And the Redis cache section - 
 _REDIS_HOST = os.environ.get('REDIS_HOST') or 'localhost'
 _REDIS_PORT = os.environ.get('REDIS_PORT') or '6379'
 
@@ -436,7 +436,7 @@ else:
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             },
-            'KEY_PREFIX': 'profitplate',
+            'KEY_PREFIX': 'multi_service',
             'TIMEOUT': 300,
         }
     }

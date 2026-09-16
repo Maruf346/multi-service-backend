@@ -1,10 +1,12 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class UserRole(models.TextChoices):
     SUPER_ADMIN = 'SUPER_ADMIN', 'Super Admin'
-    RESTAURANT_ADMIN = 'RESTAURANT_ADMIN', 'Restaurant Admin'
+    CUSTOMER = 'CUSTOMER', 'Customer'
+    SERVICE_PROVIDER = 'SERVICE_PROVIDER', 'Service Provider'
 
 
 class UserManager(BaseUserManager):
@@ -13,7 +15,7 @@ class UserManager(BaseUserManager):
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
         extra_fields.setdefault('username', email.split('@')[0])
-        extra_fields.setdefault('role', UserRole.RESTAURANT_ADMIN)
+        extra_fields.setdefault('role', UserRole.CUSTOMER)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -23,7 +25,6 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('role', UserRole.SUPER_ADMIN)
-        extra_fields.setdefault('password_change_required', False)
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -36,25 +37,29 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=150, blank=True, default='')
-
-    # Application-level role (separate from Django's is_staff / is_superuser)
-    role = models.CharField(
-        max_length=20,
-        choices=UserRole.choices,
-        default=UserRole.RESTAURANT_ADMIN,
-    )
-
-    # Set to True when a Super Admin creates a Restaurant Admin with a
-    # temporary password. The frontend must redirect to the change-password
-    # screen while this flag is True.
-    password_change_required = models.BooleanField(default=False)
-
-    # Optional profile picture — stored in MEDIA_ROOT/profile_pictures/
-    profile_picture = models.ImageField(
-        upload_to='profile_pictures/',
+    phone_number = PhoneNumberField(blank=True, default='')
+    profile_image = models.ImageField(
+        upload_to='users/profile-images/',
         null=True,
         blank=True,
     )
+    street_address = models.CharField(max_length=255, blank=True, default='')
+    city = models.CharField(max_length=100, blank=True, default='')
+    state = models.CharField(max_length=100, blank=True, default='')
+    postal_code = models.CharField(max_length=20, blank=True, default='')
+    country = models.CharField(max_length=100, blank=True, default='')
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    # Application-level role. Service-specific provider profiles/onboarding
+    # should live in dedicated domain apps, not on the base identity model.
+    role = models.CharField(
+        max_length=20,
+        choices=UserRole.choices,
+        default=UserRole.CUSTOMER,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = UserManager()
 
@@ -65,15 +70,21 @@ class User(AbstractUser):
         if not self.full_name:
             names = [self.first_name, self.last_name]
             self.full_name = ' '.join(part for part in names if part).strip()
-        if not self.username:
+        if not self.username and self.email:
             self.username = self.email.split('@')[0]
         super().save(*args, **kwargs)
 
-    # ── Convenience properties ─────────────────────────────────────────────
-
     @property
     def is_super_admin(self) -> bool:
-        return self.role == UserRole.SUPER_ADMIN
+        return self.role == UserRole.SUPER_ADMIN or self.is_superuser
+
+    @property
+    def is_customer(self) -> bool:
+        return self.role == UserRole.CUSTOMER
+
+    @property
+    def is_service_provider(self) -> bool:
+        return self.role == UserRole.SERVICE_PROVIDER
 
     def __str__(self):
         return self.full_name or self.email

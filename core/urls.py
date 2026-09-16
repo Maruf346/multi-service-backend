@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/', include('apps.api.urls')),
 
     # CKEditor 5 upload
-    path('ckeditor5/', include('django_ckeditor_5.urls')),
+    # path('ckeditor5/', include('django_ckeditor_5.urls')),
 ]
 
 if settings.DEBUG:

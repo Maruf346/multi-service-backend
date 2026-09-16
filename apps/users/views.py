@@ -1,58 +1,48 @@
 import logging
 
-from django.contrib.auth import get_user_model
-from django.db.models import Q
-from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import (
-    extend_schema, OpenApiResponse, inline_serializer, OpenApiParameter,
-)
-from rest_framework import filters, generics, serializers, status
+from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
+from rest_framework import serializers, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from apps.users.models import UserRole
-from apps.users.permissions import IsSuperAdmin
-from .serializers import *
-from .services import *
+from .serializers import (
+    AuthTokenResponseSerializer,
+    ChangePasswordSerializer,
+    InitiatePasswordResetSerializer,
+    InitiateRegistrationSerializer,
+    LoginSerializer,
+    LogoutSerializer,
+    RegistrationResponseSerializer,
+    ResetPasswordSerializer,
+    SuperAdminLoginSerializer,
+    UpdateProfileSerializer,
+    UserPublicSerializer,
+    VerifyPasswordResetOTPSerializer,
+    VerifyRegistrationOTPSerializer,
+)
+from .services import PasswordResetService, RegistrationService
 
 logger = logging.getLogger(__name__)
-User = get_user_model()
 
 
-# ── Login ──────────────────────────────────────────────────────────────────
+class CustomTokenRefreshView(TokenRefreshView):
+    pass
+
 
 @extend_schema(
-    tags=['auth'],
+    tags=['Auth'],
     summary='Login',
-    description=(
-        'Authenticate with email and password. Returns JWT access and refresh tokens, '
-        'user role, profile picture URL, and password_change_required flag.'
-    ),
     request=LoginSerializer,
-    responses={
-        200: inline_serializer(
-            name='LoginResponse',
-            fields={
-                'access': serializers.CharField(),
-                'refresh': serializers.CharField(),
-                'user': UserPublicSerializer(),
-                'password_change_required': serializers.BooleanField(),
-            },
-        ),
-        400: OpenApiResponse(description='Invalid credentials or account disabled'),
-    },
+    responses={200: AuthTokenResponseSerializer},
 )
 class LoginView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
-
-    def get_authenticate_header(self, request):
-        return 'Bearer'
 
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data, context={'request': request})
@@ -65,20 +55,35 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'refresh': str(refresh),
             'user': UserPublicSerializer(user, context={'request': request}).data,
-            'password_change_required': user.password_change_required,
         }, status=status.HTTP_200_OK)
 
 
-# ── Logout ─────────────────────────────────────────────────────────────────
+@extend_schema(
+    tags=['Auth'],
+    summary='Admin dashboard login',
+    request=SuperAdminLoginSerializer,
+    responses={200: AuthTokenResponseSerializer},
+)
+class AdminDashboardLoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = SuperAdminLoginSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserPublicSerializer(user, context={'request': request}).data,
+        }, status=status.HTTP_200_OK)
+
 
 @extend_schema(
-    tags=['auth'],
+    tags=['Auth'],
     summary='Logout',
-    description=(
-        'Blacklist the provided refresh token. After this call, the token cannot '
-        'be used to obtain new access tokens. The short-lived access token will '
-        'expire naturally.'
-    ),
     request=LogoutSerializer,
     responses={
         204: OpenApiResponse(description='Successfully logged out'),
@@ -101,23 +106,161 @@ class LogoutView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema(
+    tags=['Auth'],
+    summary='Initiate user registration',
+    request=InitiateRegistrationSerializer,
+    responses={200: inline_serializer(
+        name='InitiateRegistrationResponse',
+        fields={
+            'message': serializers.CharField(),
+            'email': serializers.EmailField(),
+            'expires_in_seconds': serializers.IntegerField(),
+        },
+    )},
+)
+class InitiateRegistrationView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-# ── Change Password ────────────────────────────────────────────────────────
+    def post(self, request):
+        serializer = InitiateRegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = RegistrationService.initiate_registration(
+            email=serializer.validated_data['email'],
+            password=serializer.validated_data['password'],
+            full_name=serializer.validated_data['full_name'],
+            phone_number=serializer.validated_data.get('phone_number', ''),
+        )
+        return Response(result, status=status.HTTP_200_OK)
+
 
 @extend_schema(
-    tags=['users'],
+    tags=['Auth'],
+    summary='Verify registration OTP',
+    request=VerifyRegistrationOTPSerializer,
+    responses={201: RegistrationResponseSerializer},
+)
+class VerifyRegistrationOTPView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = VerifyRegistrationOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = RegistrationService.verify_and_complete_registration(
+            email=serializer.validated_data['email'],
+            otp=serializer.validated_data['otp'],
+        )
+        return Response({
+            'message': 'Registration successful.',
+            'access': result['access'],
+            'refresh': result['refresh'],
+            'user': UserPublicSerializer(result['user'], context={'request': request}).data,
+        }, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(
+    tags=['Auth'],
+    summary='Initiate password reset',
+    request=InitiatePasswordResetSerializer,
+    responses={200: inline_serializer(
+        name='InitiatePasswordResetResponse',
+        fields={
+            'message': serializers.CharField(),
+            'expires_in_seconds': serializers.IntegerField(),
+        },
+    )},
+)
+class InitiatePasswordResetView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = InitiatePasswordResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = PasswordResetService.initiate_password_reset(serializer.validated_data['email'])
+        return Response(result, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Auth'],
+    summary='Verify password reset OTP',
+    description='Verify the OTP sent to the user\'s email for password reset. If valid, a reset token will be returned.',
+    request=VerifyPasswordResetOTPSerializer,
+    responses={200: inline_serializer(
+        name='VerifyPasswordResetOTPResponse',
+        fields={
+            'reset_token': serializers.CharField(),
+            'message': serializers.CharField(),
+        },
+    )},
+)
+class VerifyPasswordResetOTPView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = VerifyPasswordResetOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = PasswordResetService.verify_reset_otp(
+            email=serializer.validated_data['email'],
+            otp=serializer.validated_data['otp'],
+        )
+        return Response(result, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    tags=['Auth'],
+    summary='Reset password',
+    description='Reset password using the reset token obtained after verifying the OTP.',
+    request=ResetPasswordSerializer,
+)
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = PasswordResetService.reset_password(
+            reset_token=serializer.validated_data['reset_token'],
+            new_password=serializer.validated_data['new_password'],
+        )
+        return Response({'message': result['message']}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=['Users'], summary='Get current user profile', responses={200: UserPublicSerializer})
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(UserPublicSerializer(request.user, context={'request': request}).data)
+
+
+@extend_schema(
+    tags=['Users'],
+    summary='Update current user profile',
+    request=UpdateProfileSerializer,
+    responses={200: UserPublicSerializer},
+)
+class UpdateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+    def patch(self, request):
+        serializer = UpdateProfileSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UserPublicSerializer(request.user, context={'request': request}).data)
+
+
+@extend_schema(
+    tags=['Users'],
     summary='Change password',
-    description=(
-        'Change the authenticated user\'s password. '
-        'new_password and confirm_new_password must match. '
-        'If password_change_required was True, it will be cleared after a '
-        'successful change. Requires the current password for verification.'
-    ),
+    description='Allows an authenticated user to change their password by providing the current password and a new password.',
     request=ChangePasswordSerializer,
-    responses={
-        200: OpenApiResponse(description='Password changed successfully'),
-        400: OpenApiResponse(description='Validation error, wrong current password, or passwords do not match'),
-    },
+    responses={200: OpenApiResponse(description='Password changed successfully')},
 )
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -134,262 +277,6 @@ class ChangePasswordView(APIView):
             )
 
         user.set_password(serializer.validated_data['new_password'])
-        if user.password_change_required:
-            user.password_change_required = False
-        user.save(update_fields=['password', 'password_change_required'])
-
+        user.save(update_fields=['password', 'updated_at'])
         logger.info('Password changed for user %s', user.email)
         return Response({'detail': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-
-
-# ==================== REGISTRATION VIEWS ====================
-
-class InitiateRegistrationView(APIView):
-    # Initiate registration by sending OTP to email
-    permission_classes = [AllowAny]
-    serializer_class = InitiateRegistrationSerializer
-    
-    @extend_schema(
-        request=InitiateRegistrationSerializer,
-        summary="Initiate user registration",
-        description='Send OTP to email for user registration verification'
-    )
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            result = RegistrationService.initiate_registration(
-                email=serializer.validated_data['email'],
-                password=serializer.validated_data['password'],
-                username=serializer.validated_data['username'],
-                birth_date=serializer.validated_data.get('birth_date'),
-            )
-            
-            logger.info(f'Registration initiated for email: {serializer.validated_data['email']}')
-            return Response(result, status=status.HTTP_200_OK)
-        
-        except ValueError as e:
-            logger.warning(f'Registration initiation failed: {str(e)}')
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        except Exception as e:
-            logger.error(f"Unexpected error during registration initiation: {str(e)}")
-            return Response(
-                {'error': 'An unexpected error occurred. Please try again.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        
-    
-class VerifyRegistrationOTPView(APIView):
-    # Verify OTP and complete user registration
-    permission_classes = [AllowAny]
-    serializer_class = VerifyRegistrationOTPSerializer
-    
-    @extend_schema(
-        request=VerifyRegistrationOTPSerializer,
-        summary="Verify registration OTP",
-        description="Verifies the OTP sent during registration and completes user registration."
-    )
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            result = RegistrationService.verify_and_complete_registration(
-                email=serializer.validated_data['email'],
-                otp=serializer.validated_data['otp']
-            )
-            
-            user = result['user']
-            
-            response_data = {
-                'message': 'Registration successful',
-                'access_token': result['access_token'],
-                'refresh_token': result['refresh_token'],
-                'user': UserSerializer(user).data
-            }
-            
-            logger.info(f"User registered successfully: {user.email}")
-            
-            # try:
-            #     from .tasks import send_welcome_email
-            #     send_welcome_email.delay(user.email, user.full_name)
-            #     # NotificationTemplates.welcome(user)
-            #     NotificationTemplates.new_user_joined(user)
-            # except Exception as e:
-            #     logger.error(f"Post-registration notifications failed for {user.email}: {str(e)}")
-            
-            return Response(response_data, status=status.HTTP_201_CREATED)
-        
-        except ValueError as e:
-            logger.warning(f'OTP verification failed: {str(e)}')
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Exception as e:
-            logger.error(f'Unexpected error during OTP verification: {str(e)}')
-            return Response(
-                {'error': 'An unexpected error occurred. Please try again.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    
-# ==================== PASSWORD RESET VIEWS ====================
-
-class InitiatePasswordResetView(APIView):
-    # Initiate password reset by sending OTP to email
-    permission_classes = [AllowAny]
-    serializer_class = InitiatePasswordResetSerializer
-    
-    @extend_schema(
-        request=InitiatePasswordResetSerializer,
-        summary='Initiate password reset',
-        description='Send OTP to email for password reset'
-    )
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            result = PasswordResetService.initiate_password_reset(
-                email=serializer.validated_data['email']
-            )
-            
-            logger.info(f'Password reset initiated for email: {serializer.validated_data['email']}')
-            return Response(result, status=status.HTTP_200_OK)
-        
-        except Exception as e:
-            logger.error(f'Unexpected error during password reset initiation: {str(e)}')
-            return Response(
-                {'error': 'An unexpected error occurred. Please try again.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-class VerifyPasswordResetOTPView(APIView):
-    # Verify password reset OTP and get reset token
-    permission_classes = [AllowAny]
-    serializer_class = VerifyPasswordResetOTPSerializer
-    
-    @extend_schema(
-        request=VerifyPasswordResetOTPSerializer,
-        summary='Verify password reset OTP',
-        description='Verify OTP and receive reset token for password change'
-    )
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            result = PasswordResetService.verify_reset_otp(
-                email=serializer.validated_data['email'],
-                otp=serializer.validated_data['otp']
-            )
-            
-            logger.info(f'Password reset OTP verified for email: {serializer.validated_data['email']}')
-            return Response(result, status=status.HTTP_200_OK)
-        
-        except ValueError as v:
-            logger.warning(f"Password reset OTP verification failed: {str(v)}")
-            return Response(
-                {'error': str(v)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        except Exception as e:
-            logger.error(f"Unexpected error during password reset OTP verification: {str(e)}")
-            return Response(
-                {'error': 'An unexpected error occurred. Please try again.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-class ResetPasswordView(APIView):
-    # Reset password using reset token
-    permission_classes = [AllowAny]
-    serializer_class = ResetPasswordSerializer
-    
-    @extend_schema(
-        request=ResetPasswordSerializer,
-        summary='Reset password',
-        description='Reset password using the reset token'
-    )
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        try:
-            result = PasswordResetService.reset_password(
-                reset_token=serializer.validated_data['reset_token'],
-                new_password=serializer.validated_data['new_password']
-            )
-            
-            # Get user by ID from result and Send password update notification
-            user_id = result.get('user_id')
-            # if user_id:
-            #     try:
-            #         user = User.objects.get(id=user_id)
-            #         NotificationTemplates.password_updated(user)
-            #     except User.DoesNotExist:
-            #         pass
-            #     except Exception as e:
-            #         logger.error(f"Failed to send notification: {str(e)}")
-            
-            logger.info('Password reset successful')
-            return Response(
-                {'message': result['message']},
-                status=status.HTTP_200_OK
-            )
-        
-        except ValueError as e:
-            logger.warning(f"Password reset failed: {str(e)}")
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        except Exception as e:
-            logger.error(f"Unexpected error during password reset: {str(e)}")
-            return Response(
-                {'error': 'An unexpected error occurred. Please try again.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-
-@extend_schema(
-    tags=['admin'],
-    summary="Admin / Manager dashboard login",
-    description="Unified login for admin and manager roles. Returns JWT tokens and user role.",
-    request=SuperAdminLoginSerializer,
-)
-class AdminDashboardLoginView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = SuperAdminLoginSerializer(
-            data=request.data,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-
-        refresh = RefreshToken.for_user(user)
-
-        return Response({
-            'message': f'Welcome back, {user.full_name}.',
-            'user': {
-                # TODO: Add user details here
-            },
-            'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }
-        }, status=status.HTTP_200_OK)
-        
-        
-        

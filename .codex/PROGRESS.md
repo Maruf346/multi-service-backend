@@ -1,4 +1,4 @@
-# Multi-Service Platform — Development Progress
+# Multi-Service Platform - Development Progress
 
 > This file is the current development state of the project.
 > Keep it concise and update it after meaningful implementation work.
@@ -7,11 +7,11 @@
 
 # Current Phase
 
-**Phase 1 — Backend Foundation**
+**Phase 1 - Backend Foundation**
 
 ## Current Status
 
-🟡 In Progress
+Ã°Å¸Å¸Â¡ In Progress
 
 ---
 
@@ -22,6 +22,7 @@
 - [x] Django core project created
 - [x] `apps/` directory created
 - [x] Initial project structure established
+- [x] Adapted users app for platform identity, JWT auth, profile basics, and role permissions
 
 ---
 
@@ -39,8 +40,8 @@ Nothing currently assigned.
 - [ ] Configure environment variables
 - [ ] Configure PostgreSQL
 - [ ] Configure REST Framework
-- [ ] Configure JWT authentication
-- [ ] Add/adapt `users` app
+- [x] Configure JWT authentication
+- [x] Add/adapt `users` app
 - [ ] Add/adapt `notifications` app
 - [ ] Establish base API structure
 - [ ] Establish base permission structure
@@ -161,6 +162,11 @@ After the foundation is stable:
 # Current Blockers
 
 None.
+
+# Notes
+
+- `users` model changes are ready for review, but migrations have not been generated or applied yet by request.
+- Service-provider-specific profile and onboarding data should be added later in dedicated service/profile apps instead of expanding the base `users` app.
 
 ---
 

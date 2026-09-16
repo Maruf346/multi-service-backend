@@ -6,24 +6,29 @@ from .models import User
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = ('email', 'full_name', 'role', 'password_change_required', 'is_staff', 'is_active')
-    list_filter = ('role', 'password_change_required', 'is_staff', 'is_active')
-    search_fields = ('email', 'full_name', 'username')
+    list_display = ('email', 'full_name', 'role', 'is_staff', 'is_active', 'created_at')
+    list_filter = ('role', 'is_staff', 'is_active')
+    search_fields = ('email', 'full_name', 'username', 'phone_number')
     ordering = ('email',)
+    readonly_fields = ('created_at', 'updated_at')
 
     fieldsets = UserAdmin.fieldsets + (
-        ('ProfitPlate Role & Security', {
-            'fields': ('role', 'password_change_required'),
+        ('Platform Role & Security', {
+            'fields': ('role'),
         }),
-        ('Extra Info', {
-            'fields': ('full_name',),
+        ('Profile', {
+            'fields': (
+                'full_name', 'phone_number', 'profile_image', 'street_address',
+                'city', 'state', 'postal_code', 'country', 'latitude', 'longitude',
+                'created_at', 'updated_at',
+            ),
         }),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ('ProfitPlate Role & Security', {
-            'fields': ('role', 'password_change_required'),
+        ('Platform Role & Security', {
+            'fields': ('role'),
         }),
-        ('Extra Info', {
-            'fields': ('email', 'full_name'),
+        ('Profile', {
+            'fields': ('email', 'full_name', 'phone_number'),
         }),
     )
