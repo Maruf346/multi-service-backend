@@ -1,0 +1,9 @@
+Hi {{ full_name|default:"there" }},
+
+Use this verification code to finish creating your Go Swift account:
+
+{{ otp }}
+
+This code expires in {{ expiry_minutes }} minutes.
+
+If you did not request this email, you can safely ignore it.

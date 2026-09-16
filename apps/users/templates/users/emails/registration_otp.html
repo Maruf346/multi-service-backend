@@ -1,0 +1,14 @@
+{% extends "users/emails/base.html" %}
+{% block title %}Verify your Multi-Service account{% endblock %}
+{% block preheader %}Use this code to complete your Multi-Service registration.{% endblock %}
+{% block heading %}Verify your account{% endblock %}
+{% block content %}
+  <p style="margin:0 0 16px;">Hi {{ full_name|default:"there" }},</p>
+  <p style="margin:0;">Use the verification code below to finish creating your Multi-Service account.</p>
+{% endblock %}
+{% block code_block %}
+  <div style="margin:26px 0 10px;padding:20px;border-radius:16px;background:#f3f7fb;border:1px solid #dbeafe;text-align:center;">
+    <div style="font-size:34px;line-height:40px;font-weight:800;letter-spacing:8px;color:#0878ff;">{{ otp }}</div>
+  </div>
+  <p style="margin:12px 0 0;font-size:14px;line-height:22px;color:#6b7280;text-align:center;">This code expires in {{ expiry_minutes }} minutes.</p>
+{% endblock %}

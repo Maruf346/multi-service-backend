@@ -1,0 +1,49 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>{% block title %}Go Swift{% endblock %}</title>
+</head>
+<body style="margin:0;padding:0;background:#22262c;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">{% block preheader %}{% endblock %}</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#22262c;margin:0;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.28);">
+          <tr>
+            <td style="padding:0;background:linear-gradient(90deg,#20c7df 0%,#0878ff 100%);height:8px;line-height:8px;font-size:1px;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:32px 34px 16px;text-align:center;">
+              {% if logo_cid %}
+                <img src="cid:{{ logo_cid }}" alt="Go Swift" width="112" style="display:inline-block;max-width:112px;height:auto;border:0;outline:none;text-decoration:none;margin:0 auto 18px;">
+              {% else %}
+                <div style="display:inline-block;margin-bottom:18px;padding:10px 16px;border-radius:999px;background:#f3f4f6;color:#111827;font-weight:700;">Go Swift</div>
+              {% endif %}
+              <h1 style="margin:0;color:#111827;font-size:26px;line-height:34px;font-weight:800;letter-spacing:0;">{% block heading %}{% endblock %}</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 34px 34px;">
+              <div style="font-size:16px;line-height:26px;color:#374151;">
+                {% block content %}{% endblock %}
+              </div>
+              {% block code_block %}{% endblock %}
+              {% block action %}{% endblock %}
+              <p style="margin:30px 0 0;font-size:13px;line-height:20px;color:#6b7280;">If you did not request this email, you can safely ignore it.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:22px 34px;background:#f8fafc;text-align:center;border-top:1px solid #e5e7eb;">
+              <p style="margin:0;font-size:12px;line-height:18px;color:#6b7280;">Go Swift platform notifications</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

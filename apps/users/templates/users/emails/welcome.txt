@@ -1,0 +1,7 @@
+Hi {{ full_name|default:"there" }},
+
+Your Go Swift account is ready. You can now use one account across the Go Swift platform.
+
+Continue to the app: {{ frontend_url }}
+
+If you did not request this email, you can safely ignore it.

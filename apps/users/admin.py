@@ -14,7 +14,7 @@ class CustomUserAdmin(UserAdmin):
 
     fieldsets = UserAdmin.fieldsets + (
         ('Platform Role & Security', {
-            'fields': ('role'),
+            'fields': ('role',),
         }),
         ('Profile', {
             'fields': (
@@ -26,7 +26,7 @@ class CustomUserAdmin(UserAdmin):
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Platform Role & Security', {
-            'fields': ('role'),
+            'fields': ('role',),
         }),
         ('Profile', {
             'fields': ('email', 'full_name', 'phone_number'),

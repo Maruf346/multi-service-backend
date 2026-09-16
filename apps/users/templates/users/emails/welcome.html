@@ -1,0 +1,13 @@
+{% extends "users/emails/base.html" %}
+{% block title %}Welcome to Multi-Service{% endblock %}
+{% block preheader %}Your Multi-Service account is ready.{% endblock %}
+{% block heading %}Welcome to Multi-Service{% endblock %}
+{% block content %}
+  <p style="margin:0 0 16px;">Hi {{ full_name|default:"there" }},</p>
+  <p style="margin:0;">Your account is ready. You can now use one account across the Multi-Service platform.</p>
+{% endblock %}
+{% block action %}
+  <div style="margin:28px 0 0;text-align:center;">
+    <a href="{{ frontend_url }}" style="display:inline-block;padding:14px 28px;border-radius:999px;background:linear-gradient(90deg,#20c7df 0%,#0878ff 100%);color:#111827;text-decoration:none;font-weight:800;font-size:15px;line-height:20px;">Continue to app</a>
+  </div>
+{% endblock %}
