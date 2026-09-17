@@ -56,9 +56,12 @@ class RideProviderProfileAdmin(BaseProviderProfileAdmin):
     fieldsets = BaseProviderProfileAdmin.fieldsets + (
         ('Ride Onboarding', {
             'fields': (
-                'legal_name', 'driver_license_number', 'driver_license_expiry',
-                'vehicle_category', 'vehicle_make', 'vehicle_model', 'vehicle_year',
-                'license_plate', 'vin', 'seat_capacity',
+                'profile_photo', 'legal_name', 'public_service_driver_license',
+                'public_service_driver_license_file', 'nid_card_file',
+                'bahamian_driving_license_file', 'car_registration_file',
+                'vehicle_image', 'vehicle_category', 'vehicle_make', 'vehicle_model',
+                'vehicle_year', 'license_plate', 'vin', 'seat_capacity',
+                'online_accepting_requests',
             ),
         }),
     )
@@ -69,8 +72,12 @@ class RestaurantProviderProfileAdmin(BaseProviderProfileAdmin):
     fieldsets = BaseProviderProfileAdmin.fieldsets + (
         ('Restaurant Onboarding', {
             'fields': (
-                'restaurant_name', 'cuisine_type', 'business_license_number', 'tax_id',
-                'opening_time', 'closing_time', 'accepts_delivery',
+                'restaurant_photo', 'logo', 'restaurant_name', 'cuisine_concept',
+                'island_service_hub', 'kitchen_dispatch_address', 'kitchen_latitude',
+                'kitchen_longitude', 'manager_or_head_chef_name', 'commercial_line',
+                'billing_email', 'business_license_number', 'tax_id',
+                'commercial_license_file', 'average_prep_window', 'operating_hours',
+                'accepting_orders',
             ),
         }),
     )
@@ -81,8 +88,9 @@ class CourierProviderProfileAdmin(BaseProviderProfileAdmin):
     fieldsets = BaseProviderProfileAdmin.fieldsets + (
         ('Courier Onboarding', {
             'fields': (
-                'legal_name', 'government_id_number', 'vehicle_type', 'vehicle_plate',
-                'max_package_size', 'accepts_fragile_items',
+                'profile_photo', 'legal_name', 'operating_island_zone', 'transport_mode',
+                'driver_license_number', 'driver_license_file', 'courier_permit_file',
+                'police_record_certificate_file', 'online_accepting_dispatch',
             ),
         }),
     )
@@ -93,8 +101,10 @@ class RentalProviderProfileAdmin(BaseProviderProfileAdmin):
     fieldsets = BaseProviderProfileAdmin.fieldsets + (
         ('Rental Onboarding', {
             'fields': (
-                'company_registration_number', 'tax_id', 'fleet_size',
-                'handover_address', 'offers_vehicle_delivery',
+                'logo', 'company_or_host_legal_name', 'operational_contact_name',
+                'business_contact_number', 'primary_operating_base', 'rental_license_number',
+                'business_license_permit_file', 'rental_license_file',
+                'estimated_active_fleet_size',
             ),
         }),
     )
@@ -105,8 +115,10 @@ class PropertyProviderProfileAdmin(BaseProviderProfileAdmin):
     fieldsets = BaseProviderProfileAdmin.fieldsets + (
         ('Property Onboarding', {
             'fields': (
-                'host_legal_name', 'business_registration_number',
-                'property_manager_license', 'emergency_contact_phone',
+                'logo', 'host_name', 'official_host_email', 'mobile_phone',
+                'primary_property_location', 'property_typology', 'estimated_portfolio_scale',
+                'tourism_license_number', 'tourism_license_file',
+                'taxpayer_identification_number', 'government_id_or_passport_file',
             ),
         }),
     )

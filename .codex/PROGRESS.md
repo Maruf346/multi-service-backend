@@ -25,6 +25,7 @@ In Progress
 - [x] Adapted users app for platform identity, JWT auth, profile basics, and role permissions
 - [x] Adapted notifications app for REST notifications, SuperAdmin websocket delivery, and service notification templates
 - [x] Added service-specific provider profile apps/models/endpoints with PATCH drafts, submit payloads, and simplified onboarding statuses
+- [x] Expanded provider onboarding fields with service-specific document and image upload fields
 
 ---
 

@@ -115,7 +115,7 @@ class ProviderTypedProfileView(APIView):
             return Response({'detail': 'Completed provider profiles cannot be edited here.'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer_class = self.get_write_serializer()
-        serializer = serializer_class(existing, data=request.data, partial=bool(existing), context={'request': request})
+        serializer = serializer_class(existing, data=request.data, partial=True, context={'request': request})
         serializer.is_valid(raise_exception=True)
         try:
             profile, created = ProviderProfileService.upsert_profile(

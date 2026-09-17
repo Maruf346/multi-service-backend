@@ -37,14 +37,16 @@ class ProviderProfileService:
     @staticmethod
     @transaction.atomic
     def submit_profile(user, model_class, validated_data):
+        existing = get_provider_profile_for_user(user)
+        if existing and existing.onboarding_status == ProviderOnboardingStatus.COMPLETED:
+            raise ValidationError('Completed provider profiles cannot be resubmitted.')
+
         profile, created = ProviderProfileService.upsert_profile(
             user=user,
             model_class=model_class,
             validated_data=validated_data,
             mark_incomplete=False,
         )
-        if profile.onboarding_status == ProviderOnboardingStatus.COMPLETED:
-            raise ValidationError('Completed provider profiles cannot be resubmitted.')
         profile.submit_for_review()
         safe_notify(
             NotificationTemplates.provider_onboarding_submitted,

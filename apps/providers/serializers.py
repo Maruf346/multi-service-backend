@@ -32,6 +32,44 @@ COMMON_WRITE_FIELDS = [
     'latitude', 'longitude',
 ]
 
+RIDE_FIELDS = [
+    'profile_photo', 'legal_name', 'public_service_driver_license',
+    'public_service_driver_license_file', 'nid_card_file',
+    'bahamian_driving_license_file', 'car_registration_file',
+    'vehicle_image', 'vehicle_category', 'vehicle_make', 'vehicle_model',
+    'vehicle_year', 'license_plate', 'vin', 'seat_capacity',
+    'online_accepting_requests',
+]
+
+RESTAURANT_FIELDS = [
+    'restaurant_photo', 'logo', 'restaurant_name', 'cuisine_concept',
+    'island_service_hub', 'kitchen_dispatch_address', 'kitchen_latitude',
+    'kitchen_longitude', 'manager_or_head_chef_name', 'commercial_line',
+    'billing_email', 'business_license_number', 'tax_id',
+    'commercial_license_file', 'average_prep_window', 'operating_hours',
+    'accepting_orders',
+]
+
+COURIER_FIELDS = [
+    'profile_photo', 'legal_name', 'operating_island_zone', 'transport_mode',
+    'driver_license_number', 'driver_license_file', 'courier_permit_file',
+    'police_record_certificate_file', 'online_accepting_dispatch',
+]
+
+RENTAL_FIELDS = [
+    'logo', 'company_or_host_legal_name', 'operational_contact_name',
+    'business_contact_number', 'primary_operating_base', 'rental_license_number',
+    'business_license_permit_file', 'rental_license_file',
+    'estimated_active_fleet_size',
+]
+
+PROPERTY_FIELDS = [
+    'logo', 'host_name', 'official_host_email', 'mobile_phone',
+    'primary_property_location', 'property_typology', 'estimated_portfolio_scale',
+    'tourism_license_number', 'tourism_license_file',
+    'taxpayer_identification_number', 'government_id_or_passport_file',
+]
+
 
 class DetailSerializer(serializers.Serializer):
     detail = serializers.CharField()
@@ -47,22 +85,14 @@ class ProviderProfileSerializerMixin(serializers.ModelSerializer):
 class RideProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
         model = RideProviderProfile
-        fields = COMMON_FIELDS + [
-            'legal_name', 'driver_license_number', 'driver_license_expiry',
-            'vehicle_category', 'vehicle_make', 'vehicle_model', 'vehicle_year',
-            'license_plate', 'vin', 'seat_capacity',
-        ]
+        fields = COMMON_FIELDS + RIDE_FIELDS
         read_only_fields = COMMON_READ_ONLY_FIELDS
 
 
 class RideProviderProfileWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = RideProviderProfile
-        fields = COMMON_WRITE_FIELDS + [
-            'legal_name', 'driver_license_number', 'driver_license_expiry',
-            'vehicle_category', 'vehicle_make', 'vehicle_model', 'vehicle_year',
-            'license_plate', 'vin', 'seat_capacity',
-        ]
+        fields = COMMON_WRITE_FIELDS + RIDE_FIELDS
 
 
 class RideProviderSubmitResponseSerializer(serializers.Serializer):
@@ -73,20 +103,14 @@ class RideProviderSubmitResponseSerializer(serializers.Serializer):
 class RestaurantProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
         model = RestaurantProviderProfile
-        fields = COMMON_FIELDS + [
-            'restaurant_name', 'cuisine_type', 'business_license_number', 'tax_id',
-            'opening_time', 'closing_time', 'accepts_delivery',
-        ]
+        fields = COMMON_FIELDS + RESTAURANT_FIELDS
         read_only_fields = COMMON_READ_ONLY_FIELDS
 
 
 class RestaurantProviderProfileWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantProviderProfile
-        fields = COMMON_WRITE_FIELDS + [
-            'restaurant_name', 'cuisine_type', 'business_license_number', 'tax_id',
-            'opening_time', 'closing_time', 'accepts_delivery',
-        ]
+        fields = COMMON_WRITE_FIELDS + RESTAURANT_FIELDS
 
 
 class RestaurantProviderSubmitResponseSerializer(serializers.Serializer):
@@ -97,20 +121,14 @@ class RestaurantProviderSubmitResponseSerializer(serializers.Serializer):
 class CourierProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
         model = CourierProviderProfile
-        fields = COMMON_FIELDS + [
-            'legal_name', 'government_id_number', 'vehicle_type', 'vehicle_plate',
-            'max_package_size', 'accepts_fragile_items',
-        ]
+        fields = COMMON_FIELDS + COURIER_FIELDS
         read_only_fields = COMMON_READ_ONLY_FIELDS
 
 
 class CourierProviderProfileWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = CourierProviderProfile
-        fields = COMMON_WRITE_FIELDS + [
-            'legal_name', 'government_id_number', 'vehicle_type', 'vehicle_plate',
-            'max_package_size', 'accepts_fragile_items',
-        ]
+        fields = COMMON_WRITE_FIELDS + COURIER_FIELDS
 
 
 class CourierProviderSubmitResponseSerializer(serializers.Serializer):
@@ -121,20 +139,14 @@ class CourierProviderSubmitResponseSerializer(serializers.Serializer):
 class RentalProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
         model = RentalProviderProfile
-        fields = COMMON_FIELDS + [
-            'company_registration_number', 'tax_id', 'fleet_size',
-            'handover_address', 'offers_vehicle_delivery',
-        ]
+        fields = COMMON_FIELDS + RENTAL_FIELDS
         read_only_fields = COMMON_READ_ONLY_FIELDS
 
 
 class RentalProviderProfileWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = RentalProviderProfile
-        fields = COMMON_WRITE_FIELDS + [
-            'company_registration_number', 'tax_id', 'fleet_size',
-            'handover_address', 'offers_vehicle_delivery',
-        ]
+        fields = COMMON_WRITE_FIELDS + RENTAL_FIELDS
 
 
 class RentalProviderSubmitResponseSerializer(serializers.Serializer):
@@ -145,20 +157,14 @@ class RentalProviderSubmitResponseSerializer(serializers.Serializer):
 class PropertyProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
         model = PropertyProviderProfile
-        fields = COMMON_FIELDS + [
-            'host_legal_name', 'business_registration_number',
-            'property_manager_license', 'emergency_contact_phone',
-        ]
+        fields = COMMON_FIELDS + PROPERTY_FIELDS
         read_only_fields = COMMON_READ_ONLY_FIELDS
 
 
 class PropertyProviderProfileWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropertyProviderProfile
-        fields = COMMON_WRITE_FIELDS + [
-            'host_legal_name', 'business_registration_number',
-            'property_manager_license', 'emergency_contact_phone',
-        ]
+        fields = COMMON_WRITE_FIELDS + PROPERTY_FIELDS
 
 
 class PropertyProviderSubmitResponseSerializer(serializers.Serializer):
