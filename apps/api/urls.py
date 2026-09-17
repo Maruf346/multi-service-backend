@@ -10,6 +10,9 @@ urlpatterns = [
     # User profile + account management
     path('users/', include('apps.users.urls')),
 
+    # Providers
+    path('providers/', include(('apps.providers.urls', 'providers'), namespace='providers')),
+
     # Notifications
     path('notifications/', include('apps.notifications.urls')),
 

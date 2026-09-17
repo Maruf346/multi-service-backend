@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     
     # Local apps
     'apps.users',
+    'apps.providers',
     'apps.notifications',
 ]
 
@@ -351,7 +352,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "Multi-Service",
     "site_brand": "Multi-Service",
     "welcome_sign": "Welcome to the Multi-Service Admin Panel",
-    "copyright": "Multi-Service © 2026",
+    "copyright": "Multi-Service Â© 2026",
     "user_avatar": None,
     "icons": {
         "auth": "fas fa-users-cog",

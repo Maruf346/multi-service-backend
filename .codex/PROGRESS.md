@@ -11,7 +11,7 @@
 
 ## Current Status
 
-ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¡ In Progress
+ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ In Progress
 
 ---
 
@@ -24,6 +24,7 @@
 - [x] Initial project structure established
 - [x] Adapted users app for platform identity, JWT auth, profile basics, and role permissions
 - [x] Adapted notifications app for REST notifications, SuperAdmin websocket delivery, and service notification templates
+- [x] Added provider foundation app for provider profiles, onboarding submission, and SuperAdmin review
 
 ---
 
@@ -55,9 +56,9 @@ After the foundation is stable:
 
 ### Shared Platform
 
-- [ ] Provider structure
-- [ ] Provider onboarding foundation
-- [ ] SuperAdmin approval foundation
+- [x] Provider structure
+- [x] Provider onboarding foundation
+- [x] SuperAdmin approval foundation
 - [ ] Favorites
 - [ ] Ratings / reviews
 - [ ] Payment-method foundation
