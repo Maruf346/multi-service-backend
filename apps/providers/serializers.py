@@ -12,7 +12,7 @@ from .models import (
 
 COMMON_READ_ONLY_FIELDS = [
     'id', 'user', 'user_email', 'user_full_name', 'service_category',
-    'onboarding_status', 'approval_status', 'submitted_at', 'reviewed_at',
+    'onboarding_status', 'submitted_at', 'reviewed_at',
     'reviewed_by', 'reviewed_by_email', 'review_note', 'is_active',
     'created_at', 'updated_at',
 ]
@@ -21,7 +21,7 @@ COMMON_FIELDS = [
     'id', 'user', 'user_email', 'user_full_name', 'service_category',
     'business_name', 'display_name', 'contact_phone', 'contact_email',
     'business_address', 'city', 'state', 'postal_code', 'country',
-    'latitude', 'longitude', 'onboarding_status', 'approval_status',
+    'latitude', 'longitude', 'onboarding_status',
     'submitted_at', 'reviewed_at', 'reviewed_by', 'reviewed_by_email',
     'review_note', 'is_active', 'created_at', 'updated_at',
 ]
@@ -42,6 +42,7 @@ class ProviderProfileSerializerMixin(serializers.ModelSerializer):
     user_full_name = serializers.CharField(source='user.full_name', read_only=True)
     reviewed_by_email = serializers.EmailField(source='reviewed_by.email', read_only=True)
     service_category = serializers.ChoiceField(choices=ProviderServiceCategory.choices, read_only=True)
+
 
 class RideProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:

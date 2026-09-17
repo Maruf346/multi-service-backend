@@ -14,11 +14,10 @@ class BaseProviderProfileAdmin(admin.ModelAdmin):
         'business_name',
         'user_email',
         'onboarding_status',
-        'approval_status',
         'is_active',
         'created_at',
     )
-    list_filter = ('onboarding_status', 'approval_status', 'is_active', 'created_at')
+    list_filter = ('onboarding_status', 'is_active', 'created_at')
     search_fields = ('business_name', 'display_name', 'user__email', 'user__full_name', 'contact_phone')
     readonly_fields = ('created_at', 'updated_at', 'submitted_at', 'reviewed_at', 'reviewed_by')
     ordering = ('-created_at',)
@@ -35,7 +34,7 @@ class BaseProviderProfileAdmin(admin.ModelAdmin):
         }),
         ('Review State', {
             'fields': (
-                'onboarding_status', 'approval_status', 'submitted_at', 'reviewed_at',
+                'onboarding_status', 'submitted_at', 'reviewed_at',
                 'reviewed_by', 'review_note',
             ),
         }),

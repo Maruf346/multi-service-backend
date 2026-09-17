@@ -13,18 +13,9 @@ class ProviderServiceCategory(models.TextChoices):
 
 
 class ProviderOnboardingStatus(models.TextChoices):
-    DRAFT = 'draft', 'Draft'
+    INCOMPLETE = 'incomplete', 'Incomplete'
     SUBMITTED = 'submitted', 'Submitted'
-    UNDER_REVIEW = 'under_review', 'Under Review'
-    CHANGES_REQUESTED = 'changes_requested', 'Changes Requested'
     COMPLETED = 'completed', 'Completed'
-
-
-class ProviderApprovalStatus(models.TextChoices):
-    PENDING = 'pending', 'Pending'
-    APPROVED = 'approved', 'Approved'
-    REJECTED = 'rejected', 'Rejected'
-    SUSPENDED = 'suspended', 'Suspended'
 
 
 class AbstractProviderProfile(models.Model):
@@ -42,12 +33,7 @@ class AbstractProviderProfile(models.Model):
     onboarding_status = models.CharField(
         max_length=32,
         choices=ProviderOnboardingStatus.choices,
-        default=ProviderOnboardingStatus.DRAFT,
-    )
-    approval_status = models.CharField(
-        max_length=32,
-        choices=ProviderApprovalStatus.choices,
-        default=ProviderApprovalStatus.PENDING,
+        default=ProviderOnboardingStatus.INCOMPLETE,
     )
     submitted_at = models.DateTimeField(null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -74,35 +60,42 @@ class AbstractProviderProfile(models.Model):
 
     @property
     def is_approved(self):
-        return self.approval_status == ProviderApprovalStatus.APPROVED
+        return self.onboarding_status == ProviderOnboardingStatus.COMPLETED
 
     def clean(self):
         super().clean()
         if self.user_id and provider_profile_exists_for_user(self.user_id, exclude_model=type(self)):
             raise ValidationError('A provider account can only have one provider profile type.')
 
+    def mark_incomplete(self):
+        self.onboarding_status = ProviderOnboardingStatus.INCOMPLETE
+        self.submitted_at = None
+        self.reviewed_at = None
+        self.reviewed_by = None
+        self.review_note = ''
+        self.save(update_fields=['onboarding_status', 'submitted_at', 'reviewed_at', 'reviewed_by', 'review_note', 'updated_at'])
+
     def submit_for_review(self):
         self.onboarding_status = ProviderOnboardingStatus.SUBMITTED
-        self.approval_status = ProviderApprovalStatus.PENDING
         self.submitted_at = timezone.now()
+        self.reviewed_at = None
+        self.reviewed_by = None
         self.review_note = ''
-        self.save(update_fields=['onboarding_status', 'approval_status', 'submitted_at', 'review_note', 'updated_at'])
+        self.save(update_fields=['onboarding_status', 'submitted_at', 'reviewed_at', 'reviewed_by', 'review_note', 'updated_at'])
 
     def approve(self, reviewer, note=''):
         self.onboarding_status = ProviderOnboardingStatus.COMPLETED
-        self.approval_status = ProviderApprovalStatus.APPROVED
         self.reviewed_by = reviewer
         self.reviewed_at = timezone.now()
         self.review_note = note or ''
-        self.save(update_fields=['onboarding_status', 'approval_status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at'])
+        self.save(update_fields=['onboarding_status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at'])
 
     def reject(self, reviewer, note=''):
-        self.onboarding_status = ProviderOnboardingStatus.CHANGES_REQUESTED
-        self.approval_status = ProviderApprovalStatus.REJECTED
+        self.onboarding_status = ProviderOnboardingStatus.INCOMPLETE
         self.reviewed_by = reviewer
         self.reviewed_at = timezone.now()
         self.review_note = note or ''
-        self.save(update_fields=['onboarding_status', 'approval_status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at'])
+        self.save(update_fields=['onboarding_status', 'reviewed_by', 'reviewed_at', 'review_note', 'updated_at'])
 
 
 class RideProviderProfile(AbstractProviderProfile):
@@ -120,7 +113,7 @@ class RideProviderProfile(AbstractProviderProfile):
     seat_capacity = models.PositiveSmallIntegerField(null=True, blank=True)
 
     class Meta(AbstractProviderProfile.Meta):
-        indexes = [models.Index(fields=['approval_status', 'onboarding_status'])]
+        indexes = [models.Index(fields=['onboarding_status'])]
 
 
 class RestaurantProviderProfile(AbstractProviderProfile):
@@ -135,7 +128,7 @@ class RestaurantProviderProfile(AbstractProviderProfile):
     accepts_delivery = models.BooleanField(default=True)
 
     class Meta(AbstractProviderProfile.Meta):
-        indexes = [models.Index(fields=['approval_status', 'onboarding_status'])]
+        indexes = [models.Index(fields=['onboarding_status'])]
 
 
 class CourierProviderProfile(AbstractProviderProfile):
@@ -149,7 +142,7 @@ class CourierProviderProfile(AbstractProviderProfile):
     accepts_fragile_items = models.BooleanField(default=False)
 
     class Meta(AbstractProviderProfile.Meta):
-        indexes = [models.Index(fields=['approval_status', 'onboarding_status'])]
+        indexes = [models.Index(fields=['onboarding_status'])]
 
 
 class RentalProviderProfile(AbstractProviderProfile):
@@ -162,7 +155,7 @@ class RentalProviderProfile(AbstractProviderProfile):
     offers_vehicle_delivery = models.BooleanField(default=False)
 
     class Meta(AbstractProviderProfile.Meta):
-        indexes = [models.Index(fields=['approval_status', 'onboarding_status'])]
+        indexes = [models.Index(fields=['onboarding_status'])]
 
 
 class PropertyProviderProfile(AbstractProviderProfile):
@@ -174,7 +167,7 @@ class PropertyProviderProfile(AbstractProviderProfile):
     emergency_contact_phone = models.CharField(max_length=32, blank=True, default='')
 
     class Meta(AbstractProviderProfile.Meta):
-        indexes = [models.Index(fields=['approval_status', 'onboarding_status'])]
+        indexes = [models.Index(fields=['onboarding_status'])]
 
 
 PROVIDER_PROFILE_MODELS = {

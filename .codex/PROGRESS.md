@@ -11,7 +11,7 @@
 
 ## Current Status
 
-ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ In Progress
+In Progress
 
 ---
 
@@ -24,7 +24,7 @@
 - [x] Initial project structure established
 - [x] Adapted users app for platform identity, JWT auth, profile basics, and role permissions
 - [x] Adapted notifications app for REST notifications, SuperAdmin websocket delivery, and service notification templates
-- [x] Added service-specific provider profile apps/models/endpoints for onboarding submission and SuperAdmin review
+- [x] Added service-specific provider profile apps/models/endpoints with PATCH drafts, submit payloads, and simplified onboarding statuses
 
 ---
 
@@ -168,8 +168,7 @@ None.
 # Notes
 
 - users model changes are ready for review, but migrations have not been generated or applied yet by request.
--
-otifications model changes are ready for review; migration dry-run reports a pending initial notifications migration.
+- notifications model changes are ready for review; migration dry-run reports a pending initial notifications migration.
 - Service-provider-specific profile and onboarding data should be added later in dedicated service/profile apps instead of expanding the base `users` app.
 
 ---

@@ -15,7 +15,6 @@ from rest_framework.views import APIView
 from apps.users.permissions import IsSuperAdmin
 from .models import (
     PROVIDER_PROFILE_MODELS,
-    ProviderApprovalStatus,
     ProviderOnboardingStatus,
     ProviderServiceCategory,
 )
@@ -110,47 +109,25 @@ class ProviderTypedProfileView(APIView):
         serializer_class = self.get_read_serializer()
         return Response(serializer_class(profile, context={'request': request}).data)
 
-    def put(self, request):
+    def patch(self, request):
+        existing = self.get_existing(request.user)
+        if existing and existing.onboarding_status == ProviderOnboardingStatus.COMPLETED:
+            return Response({'detail': 'Completed provider profiles cannot be edited here.'}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer_class = self.get_write_serializer()
-        serializer = serializer_class(data=request.data, context={'request': request})
+        serializer = serializer_class(existing, data=request.data, partial=bool(existing), context={'request': request})
         serializer.is_valid(raise_exception=True)
         try:
             profile, created = ProviderProfileService.upsert_profile(
                 request.user,
                 self.get_model_class(),
                 serializer.validated_data,
+                mark_incomplete=True,
             )
         except DjangoValidationError as exc:
-            return Response({'detail': exc.message}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': getattr(exc, 'message', str(exc))}, status=status.HTTP_400_BAD_REQUEST)
         read_serializer = self.get_read_serializer()
         status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-        return Response(read_serializer(profile, context={'request': request}).data, status=status_code)
-
-    def patch(self, request):
-        existing = self.get_existing(request.user)
-        serializer_class = self.get_write_serializer()
-        serializer = serializer_class(existing, data=request.data, partial=bool(existing), context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        try:
-            if existing:
-                if existing.approval_status == ProviderApprovalStatus.APPROVED:
-                    return Response({'detail': 'Approved provider profiles cannot be edited here.'}, status=status.HTTP_400_BAD_REQUEST)
-                for field, value in serializer.validated_data.items():
-                    setattr(existing, field, value)
-                existing.full_clean()
-                existing.save(update_fields=[*serializer.validated_data.keys(), 'updated_at'])
-                profile = existing
-                status_code = status.HTTP_200_OK
-            else:
-                profile, _ = ProviderProfileService.upsert_profile(
-                    request.user,
-                    self.get_model_class(),
-                    serializer.validated_data,
-                )
-                status_code = status.HTTP_201_CREATED
-        except DjangoValidationError as exc:
-            return Response({'detail': exc.message}, status=status.HTTP_400_BAD_REQUEST)
-        read_serializer = self.get_read_serializer()
         return Response(read_serializer(profile, context={'request': request}).data, status=status_code)
 
 
@@ -161,19 +138,30 @@ class ProviderTypedSubmitView(APIView):
     def get_model_class(self):
         return PROVIDER_PROFILE_MODELS[self.service_category]
 
-    def post(self, request):
+    def get_existing(self, user):
         model_class = self.get_model_class()
         try:
-            profile = model_class.objects.get(user=request.user)
+            return model_class.objects.get(user=user)
         except model_class.DoesNotExist:
-            return Response({'detail': 'Provider profile not found.'}, status=status.HTTP_404_NOT_FOUND)
-        if profile.approval_status == ProviderApprovalStatus.APPROVED:
-            return Response({'detail': 'Provider profile is already approved.'}, status=status.HTTP_400_BAD_REQUEST)
-        profile = ProviderProfileService.submit_for_review(profile)
-        serializer_class = PROVIDER_SERIALIZERS[self.service_category]
+            return None
+
+    def post(self, request):
+        existing = self.get_existing(request.user)
+        serializer_class = PROVIDER_WRITE_SERIALIZERS[self.service_category]
+        serializer = serializer_class(existing, data=request.data, partial=bool(existing), context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        try:
+            profile, _ = ProviderProfileService.submit_profile(
+                request.user,
+                self.get_model_class(),
+                serializer.validated_data,
+            )
+        except DjangoValidationError as exc:
+            return Response({'detail': getattr(exc, 'message', str(exc))}, status=status.HTTP_400_BAD_REQUEST)
+        response_serializer = PROVIDER_SERIALIZERS[self.service_category]
         return Response({
-            'detail': 'Provider profile submitted for review.',
-            'provider': serializer_class(profile, context={'request': request}).data,
+            'detail': 'Provider profile submitted for approval.',
+            'provider': response_serializer(profile, context={'request': request}).data,
         })
 
 
@@ -183,15 +171,9 @@ class ProviderTypedSubmitView(APIView):
         summary='Get my ride provider profile',
         responses={200: RideProviderProfileSerializer, 404: DetailSerializer},
     ),
-    put=extend_schema(
-        tags=['Providers - Provider'],
-        summary='Create or replace my ride provider profile',
-        request=RideProviderProfileWriteSerializer,
-        responses={200: RideProviderProfileSerializer, 201: RideProviderProfileSerializer, 400: DetailSerializer},
-    ),
     patch=extend_schema(
         tags=['Providers - Provider'],
-        summary='Partially update my ride provider profile',
+        summary='Save incomplete ride provider onboarding information',
         request=RideProviderProfileWriteSerializer,
         responses={200: RideProviderProfileSerializer, 201: RideProviderProfileSerializer, 400: DetailSerializer},
     ),
@@ -203,9 +185,9 @@ class RideProviderProfileView(ProviderTypedProfileView):
 @extend_schema_view(
     post=extend_schema(
         tags=['Providers - Provider'],
-        summary='Submit my ride provider profile for SuperAdmin review',
-        request=None,
-        responses={200: RideProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+        summary='Save and submit my ride provider profile for SuperAdmin approval',
+        request=RideProviderProfileWriteSerializer,
+        responses={200: RideProviderSubmitResponseSerializer, 400: DetailSerializer},
     )
 )
 class RideProviderSubmitView(ProviderTypedSubmitView):
@@ -218,15 +200,9 @@ class RideProviderSubmitView(ProviderTypedSubmitView):
         summary='Get my restaurant provider profile',
         responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer},
     ),
-    put=extend_schema(
-        tags=['Providers - Provider'],
-        summary='Create or replace my restaurant provider profile',
-        request=RestaurantProviderProfileWriteSerializer,
-        responses={200: RestaurantProviderProfileSerializer, 201: RestaurantProviderProfileSerializer, 400: DetailSerializer},
-    ),
     patch=extend_schema(
         tags=['Providers - Provider'],
-        summary='Partially update my restaurant provider profile',
+        summary='Save incomplete restaurant provider onboarding information',
         request=RestaurantProviderProfileWriteSerializer,
         responses={200: RestaurantProviderProfileSerializer, 201: RestaurantProviderProfileSerializer, 400: DetailSerializer},
     ),
@@ -238,9 +214,9 @@ class RestaurantProviderProfileView(ProviderTypedProfileView):
 @extend_schema_view(
     post=extend_schema(
         tags=['Providers - Provider'],
-        summary='Submit my restaurant provider profile for SuperAdmin review',
-        request=None,
-        responses={200: RestaurantProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+        summary='Save and submit my restaurant provider profile for SuperAdmin approval',
+        request=RestaurantProviderProfileWriteSerializer,
+        responses={200: RestaurantProviderSubmitResponseSerializer, 400: DetailSerializer},
     )
 )
 class RestaurantProviderSubmitView(ProviderTypedSubmitView):
@@ -253,15 +229,9 @@ class RestaurantProviderSubmitView(ProviderTypedSubmitView):
         summary='Get my courier provider profile',
         responses={200: CourierProviderProfileSerializer, 404: DetailSerializer},
     ),
-    put=extend_schema(
-        tags=['Providers - Provider'],
-        summary='Create or replace my courier provider profile',
-        request=CourierProviderProfileWriteSerializer,
-        responses={200: CourierProviderProfileSerializer, 201: CourierProviderProfileSerializer, 400: DetailSerializer},
-    ),
     patch=extend_schema(
         tags=['Providers - Provider'],
-        summary='Partially update my courier provider profile',
+        summary='Save incomplete courier provider onboarding information',
         request=CourierProviderProfileWriteSerializer,
         responses={200: CourierProviderProfileSerializer, 201: CourierProviderProfileSerializer, 400: DetailSerializer},
     ),
@@ -273,9 +243,9 @@ class CourierProviderProfileView(ProviderTypedProfileView):
 @extend_schema_view(
     post=extend_schema(
         tags=['Providers - Provider'],
-        summary='Submit my courier provider profile for SuperAdmin review',
-        request=None,
-        responses={200: CourierProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+        summary='Save and submit my courier provider profile for SuperAdmin approval',
+        request=CourierProviderProfileWriteSerializer,
+        responses={200: CourierProviderSubmitResponseSerializer, 400: DetailSerializer},
     )
 )
 class CourierProviderSubmitView(ProviderTypedSubmitView):
@@ -288,15 +258,9 @@ class CourierProviderSubmitView(ProviderTypedSubmitView):
         summary='Get my rental provider profile',
         responses={200: RentalProviderProfileSerializer, 404: DetailSerializer},
     ),
-    put=extend_schema(
-        tags=['Providers - Provider'],
-        summary='Create or replace my rental provider profile',
-        request=RentalProviderProfileWriteSerializer,
-        responses={200: RentalProviderProfileSerializer, 201: RentalProviderProfileSerializer, 400: DetailSerializer},
-    ),
     patch=extend_schema(
         tags=['Providers - Provider'],
-        summary='Partially update my rental provider profile',
+        summary='Save incomplete rental provider onboarding information',
         request=RentalProviderProfileWriteSerializer,
         responses={200: RentalProviderProfileSerializer, 201: RentalProviderProfileSerializer, 400: DetailSerializer},
     ),
@@ -308,9 +272,9 @@ class RentalProviderProfileView(ProviderTypedProfileView):
 @extend_schema_view(
     post=extend_schema(
         tags=['Providers - Provider'],
-        summary='Submit my rental provider profile for SuperAdmin review',
-        request=None,
-        responses={200: RentalProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+        summary='Save and submit my rental provider profile for SuperAdmin approval',
+        request=RentalProviderProfileWriteSerializer,
+        responses={200: RentalProviderSubmitResponseSerializer, 400: DetailSerializer},
     )
 )
 class RentalProviderSubmitView(ProviderTypedSubmitView):
@@ -323,15 +287,9 @@ class RentalProviderSubmitView(ProviderTypedSubmitView):
         summary='Get my property provider profile',
         responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer},
     ),
-    put=extend_schema(
-        tags=['Providers - Provider'],
-        summary='Create or replace my property provider profile',
-        request=PropertyProviderProfileWriteSerializer,
-        responses={200: PropertyProviderProfileSerializer, 201: PropertyProviderProfileSerializer, 400: DetailSerializer},
-    ),
     patch=extend_schema(
         tags=['Providers - Provider'],
-        summary='Partially update my property provider profile',
+        summary='Save incomplete property provider onboarding information',
         request=PropertyProviderProfileWriteSerializer,
         responses={200: PropertyProviderProfileSerializer, 201: PropertyProviderProfileSerializer, 400: DetailSerializer},
     ),
@@ -343,9 +301,9 @@ class PropertyProviderProfileView(ProviderTypedProfileView):
 @extend_schema_view(
     post=extend_schema(
         tags=['Providers - Provider'],
-        summary='Submit my property provider profile for SuperAdmin review',
-        request=None,
-        responses={200: PropertyProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+        summary='Save and submit my property provider profile for SuperAdmin approval',
+        request=PropertyProviderProfileWriteSerializer,
+        responses={200: PropertyProviderSubmitResponseSerializer, 400: DetailSerializer},
     )
 )
 class PropertyProviderSubmitView(ProviderTypedSubmitView):
@@ -362,7 +320,6 @@ class SuperAdminProviderProfileListView(APIView):
         parameters=[
             OpenApiParameter('service_category', str, enum=[choice.value for choice in ProviderServiceCategory], required=False, description=SERVICE_CATEGORY_DESCRIPTION),
             OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
-            OpenApiParameter('approval_status', str, enum=[choice.value for choice in ProviderApprovalStatus], required=False),
             OpenApiParameter('is_active', bool, required=False),
         ],
         responses={200: PROVIDER_APPLICATION_LIST_RESPONSE},
@@ -379,9 +336,6 @@ class SuperAdminProviderProfileListView(APIView):
             onboarding_status = (request.query_params.get('onboarding_status') or '').strip()
             if onboarding_status:
                 queryset = queryset.filter(onboarding_status=onboarding_status)
-            approval_status = (request.query_params.get('approval_status') or '').strip()
-            if approval_status:
-                queryset = queryset.filter(approval_status=approval_status)
             is_active = request.query_params.get('is_active')
             if is_active is not None:
                 queryset = queryset.filter(is_active=str(is_active).strip().lower() in ('1', 'true', 'yes'))
