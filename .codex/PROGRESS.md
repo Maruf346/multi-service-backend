@@ -11,7 +11,7 @@
 
 ## Current Status
 
-ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ In Progress
+ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ In Progress
 
 ---
 
@@ -24,7 +24,7 @@
 - [x] Initial project structure established
 - [x] Adapted users app for platform identity, JWT auth, profile basics, and role permissions
 - [x] Adapted notifications app for REST notifications, SuperAdmin websocket delivery, and service notification templates
-- [x] Added provider foundation app for provider profiles, onboarding submission, and SuperAdmin review
+- [x] Added service-specific provider profile apps/models/endpoints for onboarding submission and SuperAdmin review
 
 ---
 

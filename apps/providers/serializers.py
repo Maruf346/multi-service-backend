@@ -1,75 +1,168 @@
 from rest_framework import serializers
 
-from apps.users.models import UserRole
-from .models import ProviderApprovalStatus, ProviderOnboardingStatus, ProviderProfile, ProviderServiceCategory
+from .models import (
+    CourierProviderProfile,
+    PropertyProviderProfile,
+    ProviderApprovalStatus,
+    ProviderOnboardingStatus,
+    ProviderServiceCategory,
+    RentalProviderProfile,
+    RestaurantProviderProfile,
+    RideProviderProfile,
+)
 
 
-class ProviderProfileSerializer(serializers.ModelSerializer):
+COMMON_READ_ONLY_FIELDS = [
+    'id', 'user', 'user_email', 'user_full_name', 'service_category',
+    'onboarding_status', 'approval_status', 'submitted_at', 'reviewed_at',
+    'reviewed_by', 'reviewed_by_email', 'review_note', 'is_active',
+    'created_at', 'updated_at',
+]
+
+COMMON_FIELDS = [
+    'id', 'user', 'user_email', 'user_full_name', 'service_category',
+    'business_name', 'display_name', 'contact_phone', 'contact_email',
+    'business_address', 'city', 'state', 'postal_code', 'country',
+    'latitude', 'longitude', 'onboarding_status', 'approval_status',
+    'submitted_at', 'reviewed_at', 'reviewed_by', 'reviewed_by_email',
+    'review_note', 'is_active', 'created_at', 'updated_at',
+]
+
+COMMON_WRITE_FIELDS = [
+    'business_name', 'display_name', 'contact_phone', 'contact_email',
+    'business_address', 'city', 'state', 'postal_code', 'country',
+    'latitude', 'longitude',
+]
+
+
+class ProviderProfileSerializerMixin(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)
     user_full_name = serializers.CharField(source='user.full_name', read_only=True)
     reviewed_by_email = serializers.EmailField(source='reviewed_by.email', read_only=True)
+    service_category = serializers.SerializerMethodField()
 
+    def get_service_category(self, obj):
+        return obj.service_category
+
+
+class RideProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
-        model = ProviderProfile
-        fields = [
-            'id', 'user', 'user_email', 'user_full_name', 'service_category',
-            'business_name', 'display_name', 'contact_phone', 'contact_email',
-            'business_address', 'city', 'state', 'postal_code', 'country',
-            'latitude', 'longitude', 'onboarding_status', 'approval_status',
-            'submitted_at', 'reviewed_at', 'reviewed_by', 'reviewed_by_email',
-            'review_note', 'is_active', 'created_at', 'updated_at',
+        model = RideProviderProfile
+        fields = COMMON_FIELDS + [
+            'legal_name', 'driver_license_number', 'driver_license_expiry',
+            'vehicle_category', 'vehicle_make', 'vehicle_model', 'vehicle_year',
+            'license_plate', 'vin', 'seat_capacity',
         ]
-        read_only_fields = [
-            'id', 'user', 'user_email', 'user_full_name', 'onboarding_status',
-            'approval_status', 'submitted_at', 'reviewed_at', 'reviewed_by',
-            'reviewed_by_email', 'review_note', 'is_active', 'created_at', 'updated_at',
-        ]
+        read_only_fields = COMMON_READ_ONLY_FIELDS
 
 
-class ProviderProfileUpsertSerializer(serializers.ModelSerializer):
+class RideProviderProfileWriteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ProviderProfile
-        fields = [
-            'service_category', 'business_name', 'display_name', 'contact_phone',
-            'contact_email', 'business_address', 'city', 'state', 'postal_code',
-            'country', 'latitude', 'longitude',
+        model = RideProviderProfile
+        fields = COMMON_WRITE_FIELDS + [
+            'legal_name', 'driver_license_number', 'driver_license_expiry',
+            'vehicle_category', 'vehicle_make', 'vehicle_model', 'vehicle_year',
+            'license_plate', 'vin', 'seat_capacity',
         ]
-        extra_kwargs = {
-            'service_category': {'required': True},
-            'business_name': {'required': True},
-        }
 
-    def validate_service_category(self, value):
-        if value not in ProviderServiceCategory.values:
-            raise serializers.ValidationError('Invalid service category.')
-        return value
 
-    def validate(self, attrs):
-        user = self.context['request'].user
-        existing = getattr(user, 'provider_profile', None)
-        if existing and existing.approval_status == ProviderApprovalStatus.APPROVED:
-            new_category = attrs.get('service_category', existing.service_category)
-            if new_category != existing.service_category:
-                raise serializers.ValidationError({
-                    'service_category': 'Approved providers cannot change service category.'
-                })
-        return attrs
+class RestaurantProviderProfileSerializer(ProviderProfileSerializerMixin):
+    class Meta:
+        model = RestaurantProviderProfile
+        fields = COMMON_FIELDS + [
+            'restaurant_name', 'cuisine_type', 'business_license_number', 'tax_id',
+            'opening_time', 'closing_time', 'accepts_delivery',
+        ]
+        read_only_fields = COMMON_READ_ONLY_FIELDS
+
+
+class RestaurantProviderProfileWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RestaurantProviderProfile
+        fields = COMMON_WRITE_FIELDS + [
+            'restaurant_name', 'cuisine_type', 'business_license_number', 'tax_id',
+            'opening_time', 'closing_time', 'accepts_delivery',
+        ]
+
+
+class CourierProviderProfileSerializer(ProviderProfileSerializerMixin):
+    class Meta:
+        model = CourierProviderProfile
+        fields = COMMON_FIELDS + [
+            'legal_name', 'government_id_number', 'vehicle_type', 'vehicle_plate',
+            'max_package_size', 'accepts_fragile_items',
+        ]
+        read_only_fields = COMMON_READ_ONLY_FIELDS
+
+
+class CourierProviderProfileWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CourierProviderProfile
+        fields = COMMON_WRITE_FIELDS + [
+            'legal_name', 'government_id_number', 'vehicle_type', 'vehicle_plate',
+            'max_package_size', 'accepts_fragile_items',
+        ]
+
+
+class RentalProviderProfileSerializer(ProviderProfileSerializerMixin):
+    class Meta:
+        model = RentalProviderProfile
+        fields = COMMON_FIELDS + [
+            'company_registration_number', 'tax_id', 'fleet_size',
+            'handover_address', 'offers_vehicle_delivery',
+        ]
+        read_only_fields = COMMON_READ_ONLY_FIELDS
+
+
+class RentalProviderProfileWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RentalProviderProfile
+        fields = COMMON_WRITE_FIELDS + [
+            'company_registration_number', 'tax_id', 'fleet_size',
+            'handover_address', 'offers_vehicle_delivery',
+        ]
+
+
+class PropertyProviderProfileSerializer(ProviderProfileSerializerMixin):
+    class Meta:
+        model = PropertyProviderProfile
+        fields = COMMON_FIELDS + [
+            'host_legal_name', 'business_registration_number',
+            'property_manager_license', 'emergency_contact_phone',
+        ]
+        read_only_fields = COMMON_READ_ONLY_FIELDS
+
+
+class PropertyProviderProfileWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PropertyProviderProfile
+        fields = COMMON_WRITE_FIELDS + [
+            'host_legal_name', 'business_registration_number',
+            'property_manager_license', 'emergency_contact_phone',
+        ]
 
 
 class ProviderSubmitResponseSerializer(serializers.Serializer):
     detail = serializers.CharField()
-    provider = ProviderProfileSerializer()
+    provider = serializers.DictField()
 
 
 class ProviderReviewSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=1000)
 
 
-class ProviderProfileListSerializer(ProviderProfileSerializer):
-    pass
+PROVIDER_SERIALIZERS = {
+    ProviderServiceCategory.RIDES: RideProviderProfileSerializer,
+    ProviderServiceCategory.RESTAURANTS: RestaurantProviderProfileSerializer,
+    ProviderServiceCategory.COURIER: CourierProviderProfileSerializer,
+    ProviderServiceCategory.RENTALS: RentalProviderProfileSerializer,
+    ProviderServiceCategory.PROPERTIES: PropertyProviderProfileSerializer,
+}
 
-
-class ProviderRegistrationGuardMixin:
-    def validate_user_role(self, user):
-        if user.role != UserRole.SERVICE_PROVIDER:
-            raise serializers.ValidationError('Only service provider accounts can create provider profiles.')
+PROVIDER_WRITE_SERIALIZERS = {
+    ProviderServiceCategory.RIDES: RideProviderProfileWriteSerializer,
+    ProviderServiceCategory.RESTAURANTS: RestaurantProviderProfileWriteSerializer,
+    ProviderServiceCategory.COURIER: CourierProviderProfileWriteSerializer,
+    ProviderServiceCategory.RENTALS: RentalProviderProfileWriteSerializer,
+    ProviderServiceCategory.PROPERTIES: PropertyProviderProfileWriteSerializer,
+}

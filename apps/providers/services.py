@@ -1,18 +1,23 @@
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from apps.notifications.services import NotificationTemplates, safe_notify
 from apps.users.models import UserRole
-from .models import ProviderApprovalStatus, ProviderProfile
+from .models import ProviderApprovalStatus, get_provider_profile_for_user
 
 
 class ProviderProfileService:
     @staticmethod
     @transaction.atomic
-    def upsert_profile(user, validated_data):
-        profile, created = ProviderProfile.objects.update_or_create(
-            user=user,
-            defaults=validated_data,
-        )
+    def upsert_profile(user, model_class, validated_data):
+        existing = get_provider_profile_for_user(user)
+        if existing and not isinstance(existing, model_class):
+            raise ValidationError('A provider account can only have one provider profile type.')
+
+        profile, created = model_class.objects.update_or_create(user=user, defaults=validated_data)
+        profile.full_clean()
+        profile.save()
+
         if user.role != UserRole.SERVICE_PROVIDER:
             user.role = UserRole.SERVICE_PROVIDER
             user.save(update_fields=['role', 'updated_at'])
