@@ -30,6 +30,11 @@ from .services import PasswordResetService, RegistrationService
 logger = logging.getLogger(__name__)
 
 
+@extend_schema(
+    tags=['Auth'],
+    summary='Refresh JWT token',
+    responses={200: AuthTokenResponseSerializer},
+)
 class CustomTokenRefreshView(TokenRefreshView):
     pass
 
