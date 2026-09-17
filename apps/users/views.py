@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Shared'],
     summary='Refresh JWT token',
     responses={200: AuthTokenResponseSerializer},
 )
@@ -40,7 +40,7 @@ class CustomTokenRefreshView(TokenRefreshView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Customer/Provider'],
     summary='Login',
     request=LoginSerializer,
     responses={200: AuthTokenResponseSerializer},
@@ -64,7 +64,7 @@ class LoginView(APIView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Admin'],
     summary='Admin dashboard login',
     request=SuperAdminLoginSerializer,
     responses={200: AuthTokenResponseSerializer},
@@ -87,7 +87,7 @@ class AdminDashboardLoginView(APIView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Shared'],
     summary='Logout',
     request=LogoutSerializer,
     responses={
@@ -112,7 +112,7 @@ class LogoutView(APIView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Customer/Provider'],
     summary='Initiate user registration',
     request=InitiateRegistrationSerializer,
     responses={200: inline_serializer(
@@ -141,7 +141,7 @@ class InitiateRegistrationView(APIView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Customer/Provider'],
     summary='Verify registration OTP',
     request=VerifyRegistrationOTPSerializer,
     responses={201: RegistrationResponseSerializer},
@@ -166,7 +166,7 @@ class VerifyRegistrationOTPView(APIView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Shared'],
     summary='Initiate password reset',
     request=InitiatePasswordResetSerializer,
     responses={200: inline_serializer(
@@ -189,7 +189,7 @@ class InitiatePasswordResetView(APIView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Shared'],
     summary='Verify password reset OTP',
     description='Verify the OTP sent to the user\'s email for password reset. If valid, a reset token will be returned.',
     request=VerifyPasswordResetOTPSerializer,
@@ -216,7 +216,7 @@ class VerifyPasswordResetOTPView(APIView):
 
 
 @extend_schema(
-    tags=['Auth'],
+    tags=['Auth - Shared'],
     summary='Reset password',
     description='Reset password using the reset token obtained after verifying the OTP.',
     request=ResetPasswordSerializer,
@@ -261,7 +261,7 @@ class UpdateProfileView(APIView):
 
 
 @extend_schema(
-    tags=['Users'],
+    tags=['Users - Shared'],
     summary='Change password',
     description='Allows an authenticated user to change their password by providing the current password and a new password.',
     request=ChangePasswordSerializer,

@@ -18,7 +18,7 @@ class NotificationPagination(PageNumberPagination):
 
 @extend_schema_view(
     list=extend_schema(
-        tags=['Notifications'],
+        tags=['Notifications - Shared'],
         summary='List my notifications',
         description=(
             'Returns REST notifications for the authenticated user. Customers and providers use REST only. '
@@ -36,7 +36,7 @@ class NotificationPagination(PageNumberPagination):
         responses={200: NotificationSerializer(many=True)},
     ),
     retrieve=extend_schema(
-        tags=['Notifications'],
+        tags=['Notifications - Shared'],
         summary='Get my notification details',
         responses={200: NotificationSerializer, 404: OpenApiResponse(description='Notification not found.')},
     ),
@@ -75,7 +75,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     @extend_schema(
-        tags=['Notifications'],
+        tags=['Notifications - Shared'],
         summary='Mark my notification as read',
         responses={200: NotificationSerializer, 404: OpenApiResponse(description='Notification not found.')},
     )
@@ -86,7 +86,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(NotificationSerializer(notification).data, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=['Notifications'],
+        tags=['Notifications - Shared'],
         summary='Mark all my notifications as read',
         responses={200: OpenApiResponse(description='Notifications marked as read.')},
     )
@@ -99,7 +99,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({'message': f'{count} notification(s) marked as read.', 'updated_count': count})
 
     @extend_schema(
-        tags=['Notifications'],
+        tags=['Notifications - Shared'],
         summary='Get my unread notification count',
         responses={200: NotificationUnreadCountSerializer},
     )
@@ -109,7 +109,7 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({'unread_count': count}, status=status.HTTP_200_OK)
 
     @extend_schema(
-        tags=['Notifications'],
+        tags=['Notifications - Shared'],
         summary='Delete my read notifications',
         responses={200: OpenApiResponse(description='Read notifications deleted.')},
     )

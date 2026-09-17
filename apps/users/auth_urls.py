@@ -21,7 +21,7 @@ urlpatterns = [
     path('admin/login/', AdminDashboardLoginView.as_view(), name='admin-login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('refresh/', CustomTokenRefreshView.as_view(), name='refresh'),
-    path('password-reset/initiate/', InitiatePasswordResetView.as_view(), name='password-reset-initiate'),
-    path('password-reset/verify/', VerifyPasswordResetOTPView.as_view(), name='password-reset-verify'),
-    path('password-reset/complete/', ResetPasswordView.as_view(), name='password-reset-complete'),
+    path('forget-pass/initiate/', InitiatePasswordResetView.as_view(), name='forget-password-initiate'),
+    path('forget-pass/verify/', VerifyPasswordResetOTPView.as_view(), name='forget-password-verify'),
+    path('forget-pass/complete/', ResetPasswordView.as_view(), name='forget-password-complete'),
 ]
