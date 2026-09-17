@@ -11,7 +11,7 @@
 
 ## Current Status
 
-Ã°Å¸Å¸Â¡ In Progress
+ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â¡ In Progress
 
 ---
 
@@ -23,6 +23,7 @@
 - [x] `apps/` directory created
 - [x] Initial project structure established
 - [x] Adapted users app for platform identity, JWT auth, profile basics, and role permissions
+- [x] Adapted notifications app for REST notifications, SuperAdmin websocket delivery, and service notification templates
 
 ---
 
@@ -42,7 +43,7 @@ Nothing currently assigned.
 - [ ] Configure REST Framework
 - [x] Configure JWT authentication
 - [x] Add/adapt `users` app
-- [ ] Add/adapt `notifications` app
+- [x] Add/adapt `notifications` app
 - [ ] Establish base API structure
 - [ ] Establish base permission structure
 
@@ -165,7 +166,9 @@ None.
 
 # Notes
 
-- `users` model changes are ready for review, but migrations have not been generated or applied yet by request.
+- users model changes are ready for review, but migrations have not been generated or applied yet by request.
+-
+otifications model changes are ready for review; migration dry-run reports a pending initial notifications migration.
 - Service-provider-specific profile and onboarding data should be added later in dedicated service/profile apps instead of expanding the base `users` app.
 
 ---

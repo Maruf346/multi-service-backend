@@ -11,7 +11,7 @@ urlpatterns = [
     path('users/', include('apps.users.urls')),
 
     # Notifications
-    # path('notifications/', include('apps.notifications.urls')),
+    path('notifications/', include('apps.notifications.urls')),
 
     # API schema and documentation
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
