@@ -222,6 +222,7 @@ class VerifyPasswordResetOTPView(APIView):
     request=ResetPasswordSerializer,
 )
 class ResetPasswordView(APIView):
+    serializer_class = ResetPasswordSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
 

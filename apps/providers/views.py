@@ -1,11 +1,16 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import Http404
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
-from rest_framework import generics, status
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    PolymorphicProxySerializer,
+    extend_schema,
+    extend_schema_view,
+)
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.http import Http404
 
 from apps.users.permissions import IsSuperAdmin
 from .models import (
@@ -13,15 +18,69 @@ from .models import (
     ProviderApprovalStatus,
     ProviderOnboardingStatus,
     ProviderServiceCategory,
-    get_provider_profile_for_user,
 )
 from .serializers import (
     PROVIDER_SERIALIZERS,
     PROVIDER_WRITE_SERIALIZERS,
+    CourierProviderProfileSerializer,
+    CourierProviderProfileWriteSerializer,
+    CourierProviderSubmitResponseSerializer,
+    DetailSerializer,
+    PropertyProviderProfileSerializer,
+    PropertyProviderProfileWriteSerializer,
+    PropertyProviderSubmitResponseSerializer,
     ProviderReviewSerializer,
-    ProviderSubmitResponseSerializer,
+    RentalProviderProfileSerializer,
+    RentalProviderProfileWriteSerializer,
+    RentalProviderSubmitResponseSerializer,
+    RestaurantProviderProfileSerializer,
+    RestaurantProviderProfileWriteSerializer,
+    RestaurantProviderSubmitResponseSerializer,
+    RideProviderProfileSerializer,
+    RideProviderProfileWriteSerializer,
+    RideProviderSubmitResponseSerializer,
 )
 from .services import ProviderProfileService
+
+SERVICE_CATEGORY_DESCRIPTION = (
+    'Provider service category. Choices: '
+    '`rides` = ride sharing driver/provider, '
+    '`restaurants` = restaurant or food provider, '
+    '`courier` = courier delivery provider, '
+    '`rentals` = car rental provider, '
+    '`properties` = property or room booking provider.'
+)
+SERVICE_CATEGORY_PARAMETER = OpenApiParameter(
+    name='service_category',
+    type=str,
+    location=OpenApiParameter.PATH,
+    required=True,
+    enum=[choice.value for choice in ProviderServiceCategory],
+    description=SERVICE_CATEGORY_DESCRIPTION,
+)
+PROVIDER_APPLICATION_RESPONSE = PolymorphicProxySerializer(
+    component_name='ProviderApplication',
+    serializers={
+        ProviderServiceCategory.RIDES.value: RideProviderProfileSerializer,
+        ProviderServiceCategory.RESTAURANTS.value: RestaurantProviderProfileSerializer,
+        ProviderServiceCategory.COURIER.value: CourierProviderProfileSerializer,
+        ProviderServiceCategory.RENTALS.value: RentalProviderProfileSerializer,
+        ProviderServiceCategory.PROPERTIES.value: PropertyProviderProfileSerializer,
+    },
+    resource_type_field_name='service_category',
+)
+PROVIDER_APPLICATION_LIST_RESPONSE = PolymorphicProxySerializer(
+    component_name='ProviderApplicationListItem',
+    serializers={
+        ProviderServiceCategory.RIDES.value: RideProviderProfileSerializer,
+        ProviderServiceCategory.RESTAURANTS.value: RestaurantProviderProfileSerializer,
+        ProviderServiceCategory.COURIER.value: CourierProviderProfileSerializer,
+        ProviderServiceCategory.RENTALS.value: RentalProviderProfileSerializer,
+        ProviderServiceCategory.PROPERTIES.value: PropertyProviderProfileSerializer,
+    },
+    resource_type_field_name='service_category',
+    many=True,
+)
 
 
 class ProviderTypedProfileView(APIView):
@@ -44,11 +103,6 @@ class ProviderTypedProfileView(APIView):
         except model_class.DoesNotExist:
             return None
 
-    @extend_schema(
-        tags=['Providers - Provider'],
-        summary='Get my provider profile for this service type',
-        responses={200: OpenApiResponse(description='Provider profile found.'), 404: OpenApiResponse(description='Provider profile not found.')},
-    )
     def get(self, request):
         profile = self.get_existing(request.user)
         if not profile:
@@ -56,11 +110,6 @@ class ProviderTypedProfileView(APIView):
         serializer_class = self.get_read_serializer()
         return Response(serializer_class(profile, context={'request': request}).data)
 
-    @extend_schema(
-        tags=['Providers - Provider'],
-        summary='Create or replace my provider profile for this service type',
-        responses={200: OpenApiResponse(description='Provider profile updated.'), 201: OpenApiResponse(description='Provider profile created.')},
-    )
     def put(self, request):
         serializer_class = self.get_write_serializer()
         serializer = serializer_class(data=request.data, context={'request': request})
@@ -77,11 +126,6 @@ class ProviderTypedProfileView(APIView):
         status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
         return Response(read_serializer(profile, context={'request': request}).data, status=status_code)
 
-    @extend_schema(
-        tags=['Providers - Provider'],
-        summary='Partially update my provider profile for this service type',
-        responses={200: OpenApiResponse(description='Provider profile updated.'), 201: OpenApiResponse(description='Provider profile created.')},
-    )
     def patch(self, request):
         existing = self.get_existing(request.user)
         serializer_class = self.get_write_serializer()
@@ -117,11 +161,6 @@ class ProviderTypedSubmitView(APIView):
     def get_model_class(self):
         return PROVIDER_PROFILE_MODELS[self.service_category]
 
-    @extend_schema(
-        tags=['Providers - Provider'],
-        summary='Submit my provider profile for this service type',
-        responses={200: ProviderSubmitResponseSerializer, 404: OpenApiResponse(description='Provider profile not found.')},
-    )
     def post(self, request):
         model_class = self.get_model_class()
         try:
@@ -138,42 +177,177 @@ class ProviderTypedSubmitView(APIView):
         })
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Get my ride provider profile',
+        responses={200: RideProviderProfileSerializer, 404: DetailSerializer},
+    ),
+    put=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Create or replace my ride provider profile',
+        request=RideProviderProfileWriteSerializer,
+        responses={200: RideProviderProfileSerializer, 201: RideProviderProfileSerializer, 400: DetailSerializer},
+    ),
+    patch=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Partially update my ride provider profile',
+        request=RideProviderProfileWriteSerializer,
+        responses={200: RideProviderProfileSerializer, 201: RideProviderProfileSerializer, 400: DetailSerializer},
+    ),
+)
 class RideProviderProfileView(ProviderTypedProfileView):
     service_category = ProviderServiceCategory.RIDES
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Submit my ride provider profile for SuperAdmin review',
+        request=None,
+        responses={200: RideProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+    )
+)
 class RideProviderSubmitView(ProviderTypedSubmitView):
     service_category = ProviderServiceCategory.RIDES
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Get my restaurant provider profile',
+        responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer},
+    ),
+    put=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Create or replace my restaurant provider profile',
+        request=RestaurantProviderProfileWriteSerializer,
+        responses={200: RestaurantProviderProfileSerializer, 201: RestaurantProviderProfileSerializer, 400: DetailSerializer},
+    ),
+    patch=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Partially update my restaurant provider profile',
+        request=RestaurantProviderProfileWriteSerializer,
+        responses={200: RestaurantProviderProfileSerializer, 201: RestaurantProviderProfileSerializer, 400: DetailSerializer},
+    ),
+)
 class RestaurantProviderProfileView(ProviderTypedProfileView):
     service_category = ProviderServiceCategory.RESTAURANTS
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Submit my restaurant provider profile for SuperAdmin review',
+        request=None,
+        responses={200: RestaurantProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+    )
+)
 class RestaurantProviderSubmitView(ProviderTypedSubmitView):
     service_category = ProviderServiceCategory.RESTAURANTS
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Get my courier provider profile',
+        responses={200: CourierProviderProfileSerializer, 404: DetailSerializer},
+    ),
+    put=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Create or replace my courier provider profile',
+        request=CourierProviderProfileWriteSerializer,
+        responses={200: CourierProviderProfileSerializer, 201: CourierProviderProfileSerializer, 400: DetailSerializer},
+    ),
+    patch=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Partially update my courier provider profile',
+        request=CourierProviderProfileWriteSerializer,
+        responses={200: CourierProviderProfileSerializer, 201: CourierProviderProfileSerializer, 400: DetailSerializer},
+    ),
+)
 class CourierProviderProfileView(ProviderTypedProfileView):
     service_category = ProviderServiceCategory.COURIER
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Submit my courier provider profile for SuperAdmin review',
+        request=None,
+        responses={200: CourierProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+    )
+)
 class CourierProviderSubmitView(ProviderTypedSubmitView):
     service_category = ProviderServiceCategory.COURIER
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Get my rental provider profile',
+        responses={200: RentalProviderProfileSerializer, 404: DetailSerializer},
+    ),
+    put=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Create or replace my rental provider profile',
+        request=RentalProviderProfileWriteSerializer,
+        responses={200: RentalProviderProfileSerializer, 201: RentalProviderProfileSerializer, 400: DetailSerializer},
+    ),
+    patch=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Partially update my rental provider profile',
+        request=RentalProviderProfileWriteSerializer,
+        responses={200: RentalProviderProfileSerializer, 201: RentalProviderProfileSerializer, 400: DetailSerializer},
+    ),
+)
 class RentalProviderProfileView(ProviderTypedProfileView):
     service_category = ProviderServiceCategory.RENTALS
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Submit my rental provider profile for SuperAdmin review',
+        request=None,
+        responses={200: RentalProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+    )
+)
 class RentalProviderSubmitView(ProviderTypedSubmitView):
     service_category = ProviderServiceCategory.RENTALS
 
 
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Get my property provider profile',
+        responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer},
+    ),
+    put=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Create or replace my property provider profile',
+        request=PropertyProviderProfileWriteSerializer,
+        responses={200: PropertyProviderProfileSerializer, 201: PropertyProviderProfileSerializer, 400: DetailSerializer},
+    ),
+    patch=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Partially update my property provider profile',
+        request=PropertyProviderProfileWriteSerializer,
+        responses={200: PropertyProviderProfileSerializer, 201: PropertyProviderProfileSerializer, 400: DetailSerializer},
+    ),
+)
 class PropertyProviderProfileView(ProviderTypedProfileView):
     service_category = ProviderServiceCategory.PROPERTIES
 
 
+@extend_schema_view(
+    post=extend_schema(
+        tags=['Providers - Provider'],
+        summary='Submit my property provider profile for SuperAdmin review',
+        request=None,
+        responses={200: PropertyProviderSubmitResponseSerializer, 400: DetailSerializer, 404: DetailSerializer},
+    )
+)
 class PropertyProviderSubmitView(ProviderTypedSubmitView):
     service_category = ProviderServiceCategory.PROPERTIES
 
@@ -182,15 +356,16 @@ class SuperAdminProviderProfileListView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
 
     @extend_schema(
-        tags=['Providers - Admin'],
+        tags=['Providers - SuperAdmin'],
         summary='List provider onboarding applications across service types',
+        description=SERVICE_CATEGORY_DESCRIPTION,
         parameters=[
-            OpenApiParameter('service_category', str, enum=[choice.value for choice in ProviderServiceCategory], required=False),
+            OpenApiParameter('service_category', str, enum=[choice.value for choice in ProviderServiceCategory], required=False, description=SERVICE_CATEGORY_DESCRIPTION),
             OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
             OpenApiParameter('approval_status', str, enum=[choice.value for choice in ProviderApprovalStatus], required=False),
             OpenApiParameter('is_active', bool, required=False),
         ],
-        responses={200: OpenApiResponse(description='Provider applications grouped as a flat list.')},
+        responses={200: PROVIDER_APPLICATION_LIST_RESPONSE},
     )
     def get(self, request):
         items = []
@@ -219,9 +394,11 @@ class SuperAdminProviderProfileDetailView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
 
     @extend_schema(
-        tags=['Providers - Admin'],
+        tags=['Providers - SuperAdmin'],
         summary='Get provider onboarding details by service type',
-        responses={200: OpenApiResponse(description='Provider application detail.')},
+        description=SERVICE_CATEGORY_DESCRIPTION,
+        parameters=[SERVICE_CATEGORY_PARAMETER],
+        responses={200: PROVIDER_APPLICATION_RESPONSE, 404: DetailSerializer},
     )
     def get(self, request, service_category, pk):
         profile, serializer_class = _get_profile_and_serializer(service_category, pk)
@@ -232,10 +409,12 @@ class SuperAdminProviderApproveView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
 
     @extend_schema(
-        tags=['Providers - Admin'],
+        tags=['Providers - SuperAdmin'],
         summary='Approve provider onboarding by service type',
+        description=SERVICE_CATEGORY_DESCRIPTION,
+        parameters=[SERVICE_CATEGORY_PARAMETER],
         request=ProviderReviewSerializer,
-        responses={200: OpenApiResponse(description='Provider application approved.')},
+        responses={200: PROVIDER_APPLICATION_RESPONSE, 404: DetailSerializer},
     )
     def post(self, request, service_category, pk):
         profile, serializer_class = _get_profile_and_serializer(service_category, pk)
@@ -249,10 +428,12 @@ class SuperAdminProviderRejectView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
 
     @extend_schema(
-        tags=['Providers - Admin'],
+        tags=['Providers - SuperAdmin'],
         summary='Reject provider onboarding by service type',
+        description=SERVICE_CATEGORY_DESCRIPTION,
+        parameters=[SERVICE_CATEGORY_PARAMETER],
         request=ProviderReviewSerializer,
-        responses={200: OpenApiResponse(description='Provider application rejected.')},
+        responses={200: PROVIDER_APPLICATION_RESPONSE, 404: DetailSerializer},
     )
     def post(self, request, service_category, pk):
         profile, serializer_class = _get_profile_and_serializer(service_category, pk)

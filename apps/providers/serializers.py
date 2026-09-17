@@ -3,8 +3,6 @@ from rest_framework import serializers
 from .models import (
     CourierProviderProfile,
     PropertyProviderProfile,
-    ProviderApprovalStatus,
-    ProviderOnboardingStatus,
     ProviderServiceCategory,
     RentalProviderProfile,
     RestaurantProviderProfile,
@@ -35,15 +33,15 @@ COMMON_WRITE_FIELDS = [
 ]
 
 
+class DetailSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+
+
 class ProviderProfileSerializerMixin(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)
     user_full_name = serializers.CharField(source='user.full_name', read_only=True)
     reviewed_by_email = serializers.EmailField(source='reviewed_by.email', read_only=True)
-    service_category = serializers.SerializerMethodField()
-
-    def get_service_category(self, obj):
-        return obj.service_category
-
+    service_category = serializers.ChoiceField(choices=ProviderServiceCategory.choices, read_only=True)
 
 class RideProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
@@ -66,6 +64,11 @@ class RideProviderProfileWriteSerializer(serializers.ModelSerializer):
         ]
 
 
+class RideProviderSubmitResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+    provider = RideProviderProfileSerializer()
+
+
 class RestaurantProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
         model = RestaurantProviderProfile
@@ -83,6 +86,11 @@ class RestaurantProviderProfileWriteSerializer(serializers.ModelSerializer):
             'restaurant_name', 'cuisine_type', 'business_license_number', 'tax_id',
             'opening_time', 'closing_time', 'accepts_delivery',
         ]
+
+
+class RestaurantProviderSubmitResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+    provider = RestaurantProviderProfileSerializer()
 
 
 class CourierProviderProfileSerializer(ProviderProfileSerializerMixin):
@@ -104,6 +112,11 @@ class CourierProviderProfileWriteSerializer(serializers.ModelSerializer):
         ]
 
 
+class CourierProviderSubmitResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+    provider = CourierProviderProfileSerializer()
+
+
 class RentalProviderProfileSerializer(ProviderProfileSerializerMixin):
     class Meta:
         model = RentalProviderProfile
@@ -121,6 +134,11 @@ class RentalProviderProfileWriteSerializer(serializers.ModelSerializer):
             'company_registration_number', 'tax_id', 'fleet_size',
             'handover_address', 'offers_vehicle_delivery',
         ]
+
+
+class RentalProviderSubmitResponseSerializer(serializers.Serializer):
+    detail = serializers.CharField()
+    provider = RentalProviderProfileSerializer()
 
 
 class PropertyProviderProfileSerializer(ProviderProfileSerializerMixin):
@@ -142,9 +160,9 @@ class PropertyProviderProfileWriteSerializer(serializers.ModelSerializer):
         ]
 
 
-class ProviderSubmitResponseSerializer(serializers.Serializer):
+class PropertyProviderSubmitResponseSerializer(serializers.Serializer):
     detail = serializers.CharField()
-    provider = serializers.DictField()
+    provider = PropertyProviderProfileSerializer()
 
 
 class ProviderReviewSerializer(serializers.Serializer):
