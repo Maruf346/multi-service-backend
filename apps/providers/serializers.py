@@ -1,3 +1,4 @@
+from drf_spectacular.utils import PolymorphicProxySerializer, extend_schema_field
 from rest_framework import serializers
 
 from .models import (
@@ -172,6 +173,19 @@ class PropertyProviderSubmitResponseSerializer(serializers.Serializer):
     provider = PropertyProviderProfileSerializer()
 
 
+PROVIDER_APPLICATION_RESULT_SERIALIZER = PolymorphicProxySerializer(
+    component_name='ProviderApplicationPaginatedResult',
+    serializers={
+        ProviderServiceCategory.RIDES.value: RideProviderProfileSerializer,
+        ProviderServiceCategory.RESTAURANTS.value: RestaurantProviderProfileSerializer,
+        ProviderServiceCategory.COURIER.value: CourierProviderProfileSerializer,
+        ProviderServiceCategory.RENTALS.value: RentalProviderProfileSerializer,
+        ProviderServiceCategory.PROPERTIES.value: PropertyProviderProfileSerializer,
+    },
+    resource_type_field_name='service_category',
+    many=True,
+)
+
 class RideProviderProfileListResponseSerializer(serializers.Serializer):
     count = serializers.IntegerField()
     next = serializers.URLField(allow_null=True)
@@ -205,6 +219,17 @@ class PropertyProviderProfileListResponseSerializer(serializers.Serializer):
     next = serializers.URLField(allow_null=True)
     previous = serializers.URLField(allow_null=True)
     results = PropertyProviderProfileSerializer(many=True)
+
+
+class ProviderApplicationPaginatedResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = serializers.SerializerMethodField()
+
+    @extend_schema_field(PROVIDER_APPLICATION_RESULT_SERIALIZER)
+    def get_results(self, obj):
+        return obj.get('results', [])
 
 class ProviderReviewSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=1000)

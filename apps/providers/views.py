@@ -32,6 +32,7 @@ from .serializers import (
     PropertyProviderProfileListResponseSerializer,
     PropertyProviderProfileWriteSerializer,
     PropertyProviderSubmitResponseSerializer,
+    ProviderApplicationPaginatedResponseSerializer,
     ProviderReviewSerializer,
     RentalProviderProfileSerializer,
     RentalProviderProfileListResponseSerializer,
@@ -522,14 +523,17 @@ class SuperAdminProviderProfileListView(APIView):
 
     @extend_schema(
         tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_provider_applications',
         summary='List provider onboarding applications across service types',
         description=SERVICE_CATEGORY_DESCRIPTION,
         parameters=[
             OpenApiParameter('service_category', str, enum=[choice.value for choice in ProviderServiceCategory], required=False, description=SERVICE_CATEGORY_DESCRIPTION),
             OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
             OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('page', int, required=False, description='Page number for paginated results.'),
+            OpenApiParameter('page_size', int, required=False, description='Number of provider applications per page.'),
         ],
-        responses={200: PROVIDER_APPLICATION_LIST_RESPONSE},
+        responses={200: ProviderApplicationPaginatedResponseSerializer},
     )
     def get(self, request):
         items = []
@@ -548,7 +552,9 @@ class SuperAdminProviderProfileListView(APIView):
                 queryset = queryset.filter(is_active=str(is_active).strip().lower() in ('1', 'true', 'yes'))
             items.extend(serializer_class(obj, context={'request': request}).data for obj in queryset)
         items.sort(key=lambda item: item.get('created_at') or '', reverse=True)
-        return Response(items)
+        paginator = api_settings.DEFAULT_PAGINATION_CLASS()
+        page = paginator.paginate_queryset(items, request, view=self)
+        return paginator.get_paginated_response(page)
 
 
 class SuperAdminProviderProfileDetailView(APIView):
@@ -556,6 +562,7 @@ class SuperAdminProviderProfileDetailView(APIView):
 
     @extend_schema(
         tags=['Providers - SuperAdmin'],
+        operation_id='admin_retrieve_provider_application',
         summary='Get provider onboarding details by service type',
         description=SERVICE_CATEGORY_DESCRIPTION,
         parameters=[SERVICE_CATEGORY_PARAMETER],
@@ -571,6 +578,7 @@ class SuperAdminProviderApproveView(APIView):
 
     @extend_schema(
         tags=['Providers - SuperAdmin'],
+        operation_id='admin_approve_provider_application',
         summary='Approve provider onboarding by service type',
         description=SERVICE_CATEGORY_DESCRIPTION,
         parameters=[SERVICE_CATEGORY_PARAMETER],
@@ -590,6 +598,7 @@ class SuperAdminProviderRejectView(APIView):
 
     @extend_schema(
         tags=['Providers - SuperAdmin'],
+        operation_id='admin_reject_provider_application',
         summary='Reject provider onboarding by service type',
         description=SERVICE_CATEGORY_DESCRIPTION,
         parameters=[SERVICE_CATEGORY_PARAMETER],

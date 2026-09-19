@@ -64,7 +64,7 @@ class LoginView(APIView):
 
 
 @extend_schema(
-    tags=['Auth - Admin'],
+    tags=['Auth - SuperAdmin'],
     summary='Admin dashboard login',
     request=SuperAdminLoginSerializer,
     responses={200: AuthTokenResponseSerializer},
