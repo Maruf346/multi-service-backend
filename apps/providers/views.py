@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import (
@@ -10,6 +11,7 @@ from drf_spectacular.utils import (
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from apps.users.permissions import IsSuperAdmin
@@ -22,20 +24,25 @@ from .serializers import (
     PROVIDER_SERIALIZERS,
     PROVIDER_WRITE_SERIALIZERS,
     CourierProviderProfileSerializer,
+    CourierProviderProfileListResponseSerializer,
     CourierProviderProfileWriteSerializer,
     CourierProviderSubmitResponseSerializer,
     DetailSerializer,
     PropertyProviderProfileSerializer,
+    PropertyProviderProfileListResponseSerializer,
     PropertyProviderProfileWriteSerializer,
     PropertyProviderSubmitResponseSerializer,
     ProviderReviewSerializer,
     RentalProviderProfileSerializer,
+    RentalProviderProfileListResponseSerializer,
     RentalProviderProfileWriteSerializer,
     RentalProviderSubmitResponseSerializer,
     RestaurantProviderProfileSerializer,
+    RestaurantProviderProfileListResponseSerializer,
     RestaurantProviderProfileWriteSerializer,
     RestaurantProviderSubmitResponseSerializer,
     RideProviderProfileSerializer,
+    RideProviderProfileListResponseSerializer,
     RideProviderProfileWriteSerializer,
     RideProviderSubmitResponseSerializer,
 )
@@ -309,6 +316,206 @@ class PropertyProviderProfileView(ProviderTypedProfileView):
 class PropertyProviderSubmitView(ProviderTypedSubmitView):
     service_category = ProviderServiceCategory.PROPERTIES
 
+class SuperAdminTypedProviderProfileListView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+    model_class = None
+    serializer_class = None
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+
+    def get_queryset(self, request):
+        queryset = self.model_class.objects.select_related('user', 'reviewed_by').order_by('-created_at')
+
+        onboarding_status = (request.query_params.get('onboarding_status') or '').strip()
+        if onboarding_status:
+            queryset = queryset.filter(onboarding_status=onboarding_status)
+
+        is_active = request.query_params.get('is_active')
+        if is_active is not None:
+            queryset = queryset.filter(is_active=str(is_active).strip().lower() in ('1', 'true', 'yes'))
+
+        search = (request.query_params.get('search') or '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(business_name__icontains=search)
+                | Q(display_name__icontains=search)
+                | Q(contact_email__icontains=search)
+                | Q(contact_phone__icontains=search)
+                | Q(user__email__icontains=search)
+                | Q(user__full_name__icontains=search)
+            )
+        return queryset
+
+    def get(self, request):
+        queryset = self.get_queryset(request)
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = self.serializer_class(page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
+
+
+class SuperAdminTypedProviderProfileDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+    model_class = None
+    serializer_class = None
+
+    def get(self, request, pk):
+        profile = get_object_or_404(self.model_class.objects.select_related('user', 'reviewed_by'), pk=pk)
+        return Response(self.serializer_class(profile, context={'request': request}).data)
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_ride_provider_profiles',
+        summary='List ride provider profiles',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+        ],
+        responses={200: RideProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminRideProviderProfileListView(SuperAdminTypedProviderProfileListView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.RIDES]
+    serializer_class = RideProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_retrieve_ride_provider_profile',
+        summary='Retrieve ride provider profile',
+        responses={200: RideProviderProfileSerializer, 404: DetailSerializer},
+    )
+)
+class SuperAdminRideProviderProfileDetailView(SuperAdminTypedProviderProfileDetailView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.RIDES]
+    serializer_class = RideProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_restaurant_provider_profiles',
+        summary='List restaurant provider profiles',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+        ],
+        responses={200: RestaurantProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminRestaurantProviderProfileListView(SuperAdminTypedProviderProfileListView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.RESTAURANTS]
+    serializer_class = RestaurantProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_retrieve_restaurant_provider_profile',
+        summary='Retrieve restaurant provider profile',
+        responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer},
+    )
+)
+class SuperAdminRestaurantProviderProfileDetailView(SuperAdminTypedProviderProfileDetailView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.RESTAURANTS]
+    serializer_class = RestaurantProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_courier_provider_profiles',
+        summary='List courier provider profiles',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+        ],
+        responses={200: CourierProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminCourierProviderProfileListView(SuperAdminTypedProviderProfileListView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.COURIER]
+    serializer_class = CourierProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_retrieve_courier_provider_profile',
+        summary='Retrieve courier provider profile',
+        responses={200: CourierProviderProfileSerializer, 404: DetailSerializer},
+    )
+)
+class SuperAdminCourierProviderProfileDetailView(SuperAdminTypedProviderProfileDetailView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.COURIER]
+    serializer_class = CourierProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_rental_provider_profiles',
+        summary='List rental provider profiles',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+        ],
+        responses={200: RentalProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminRentalProviderProfileListView(SuperAdminTypedProviderProfileListView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.RENTALS]
+    serializer_class = RentalProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_retrieve_rental_provider_profile',
+        summary='Retrieve rental provider profile',
+        responses={200: RentalProviderProfileSerializer, 404: DetailSerializer},
+    )
+)
+class SuperAdminRentalProviderProfileDetailView(SuperAdminTypedProviderProfileDetailView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.RENTALS]
+    serializer_class = RentalProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_property_provider_profiles',
+        summary='List property provider profiles',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+        ],
+        responses={200: PropertyProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminPropertyProviderProfileListView(SuperAdminTypedProviderProfileListView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.PROPERTIES]
+    serializer_class = PropertyProviderProfileSerializer
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_retrieve_property_provider_profile',
+        summary='Retrieve property provider profile',
+        responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer},
+    )
+)
+class SuperAdminPropertyProviderProfileDetailView(SuperAdminTypedProviderProfileDetailView):
+    model_class = PROVIDER_PROFILE_MODELS[ProviderServiceCategory.PROPERTIES]
+    serializer_class = PropertyProviderProfileSerializer
 
 class SuperAdminProviderProfileListView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdmin]

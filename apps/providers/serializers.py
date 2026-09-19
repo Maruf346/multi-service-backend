@@ -172,6 +172,40 @@ class PropertyProviderSubmitResponseSerializer(serializers.Serializer):
     provider = PropertyProviderProfileSerializer()
 
 
+class RideProviderProfileListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = RideProviderProfileSerializer(many=True)
+
+
+class RestaurantProviderProfileListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = RestaurantProviderProfileSerializer(many=True)
+
+
+class CourierProviderProfileListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = CourierProviderProfileSerializer(many=True)
+
+
+class RentalProviderProfileListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = RentalProviderProfileSerializer(many=True)
+
+
+class PropertyProviderProfileListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = PropertyProviderProfileSerializer(many=True)
+
 class ProviderReviewSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=1000)
 

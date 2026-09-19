@@ -26,6 +26,7 @@ In Progress
 - [x] Adapted notifications app for REST notifications, SuperAdmin websocket delivery, and service notification templates
 - [x] Added service-specific provider profile apps/models/endpoints with PATCH drafts, submit payloads, and simplified onboarding statuses
 - [x] Expanded provider onboarding fields with service-specific document and image upload fields
+- [x] Added service-specific SuperAdmin provider profile list/retrieve endpoints for dashboards
 
 ---
 
