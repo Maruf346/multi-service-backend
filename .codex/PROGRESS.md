@@ -27,6 +27,7 @@ In Progress
 - [x] Added service-specific provider profile apps/models/endpoints with PATCH drafts, submit payloads, and simplified onboarding statuses
 - [x] Expanded provider onboarding fields with service-specific document and image upload fields
 - [x] Added service-specific SuperAdmin provider profile list/retrieve endpoints for dashboards
+- [x] Added ride service foundation with request, matching, provider lifecycle, payment status, and review APIs
 
 ---
 
@@ -72,13 +73,13 @@ After the foundation is stable:
 - [ ] Driver onboarding
 - [ ] Driver documents
 - [ ] Driver vehicle
-- [ ] Ride request
+- [x] Ride request
 - [ ] Driver matching
-- [ ] Fare calculation
-- [ ] Ride lifecycle
+- [x] Fare calculation
+- [x] Ride lifecycle
 - [ ] Live tracking
-- [ ] Ride history
-- [ ] Ratings
+- [x] Ride history
+- [x] Ratings
 
 ### Restaurant / Food
 

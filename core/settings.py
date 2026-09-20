@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # Local apps
     'apps.users',
     'apps.providers',
+    'apps.rides',
     'apps.notifications',
 ]
 

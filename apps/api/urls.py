@@ -13,6 +13,9 @@ urlpatterns = [
     # Providers
     path('providers/', include(('apps.providers.urls', 'providers'), namespace='providers')),
 
+    # Rides
+    path('rides/', include(('apps.rides.urls', 'rides'), namespace='rides')),
+
     # Notifications
     path('notifications/', include('apps.notifications.urls')),
 
