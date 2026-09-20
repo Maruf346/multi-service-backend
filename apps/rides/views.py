@@ -306,7 +306,10 @@ class ProviderRideLocationUpdateView(APIView):
             return Response({'detail': 'Driver location can only be updated for active assigned rides.'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = RideDriverLocationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        ride.mark_driver_location(serializer.validated_data['latitude'], serializer.validated_data['longitude'])
+        try:
+            ride = RideService.update_driver_location(ride, profile, serializer.validated_data['latitude'], serializer.validated_data['longitude'])
+        except DjangoValidationError as exc:
+            return Response({'detail': validation_detail(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'detail': 'Driver location updated.', 'ride': RideRequestSerializer(ride, context={'request': request}).data})
 
 

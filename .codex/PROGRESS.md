@@ -28,6 +28,7 @@ In Progress
 - [x] Expanded provider onboarding fields with service-specific document and image upload fields
 - [x] Added service-specific SuperAdmin provider profile list/retrieve endpoints for dashboards
 - [x] Added ride service foundation with request, matching, provider lifecycle, payment status, and review APIs
+- [x] Added ride WebSocket tracking for accepted customer-driver rides and live driver location updates
 
 ---
 
@@ -77,7 +78,7 @@ After the foundation is stable:
 - [ ] Driver matching
 - [x] Fare calculation
 - [x] Ride lifecycle
-- [ ] Live tracking
+- [x] Live tracking
 - [x] Ride history
 - [x] Ratings
 
@@ -91,7 +92,7 @@ After the foundation is stable:
 - [ ] Orders
 - [ ] Order lifecycle
 - [ ] Courier assignment
-- [ ] Live tracking
+- [x] Live tracking
 - [ ] Food ratings
 
 ### Courier
@@ -139,7 +140,7 @@ After the foundation is stable:
 
 - [ ] Redis
 - [ ] Celery
-- [ ] WebSockets / ASGI
+- [x] WebSockets / ASGI
 - [ ] Stripe
 - [ ] Maps / location API
 - [ ] AWS S3

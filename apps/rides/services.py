@@ -1,11 +1,14 @@
 from decimal import Decimal, ROUND_HALF_UP
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
 from apps.notifications.services import NotificationTemplates, safe_notify
 from apps.providers.models import ProviderOnboardingStatus, ProviderServiceCategory, RideProviderProfile
+from .consumers import ride_tracking_group_name
 from .models import RideCancellationActor, RidePaymentStatus, RideRequest, RideReview, RideStatus
 
 BASE_FARE = Decimal('8.00')
@@ -75,6 +78,7 @@ class RideService:
         ride.status = RideStatus.ACCEPTED
         ride.accepted_at = now
         ride.save(update_fields=['driver', 'status', 'accepted_at', 'updated_at'])
+        RideService.broadcast_status(ride, 'Ride accepted.', actor_user=driver_profile.user)
         safe_notify(
             NotificationTemplates.service_status_updated,
             user=ride.customer,
@@ -108,6 +112,7 @@ class RideService:
         ride.arrived_at = timezone.now()
         ride.save(update_fields=['status', 'arrived_at', 'updated_at'])
         RideService._notify_status(ride, driver_profile.user)
+        RideService.broadcast_status(ride, actor_user=driver_profile.user)
         return ride
 
     @staticmethod
@@ -120,6 +125,7 @@ class RideService:
         ride.started_at = timezone.now()
         ride.save(update_fields=['status', 'started_at', 'updated_at'])
         RideService._notify_status(ride, driver_profile.user)
+        RideService.broadcast_status(ride, actor_user=driver_profile.user)
         return ride
 
     @staticmethod
@@ -133,6 +139,7 @@ class RideService:
         ride.final_fare = ride.final_fare or ride.estimated_fare
         ride.save(update_fields=['status', 'completed_at', 'final_fare', 'updated_at'])
         RideService._notify_status(ride, driver_profile.user)
+        RideService.broadcast_status(ride, actor_user=driver_profile.user)
         return ride
 
     @staticmethod
@@ -150,6 +157,7 @@ class RideService:
         ride.cancelled_by = actor_type
         ride.cancellation_reason = reason or ''
         ride.save(update_fields=['status', 'cancelled_at', 'cancelled_by', 'cancellation_reason', 'updated_at'])
+        RideService.broadcast_status(ride, 'Ride cancelled.', actor_user=actor)
         if ride.driver:
             safe_notify(
                 NotificationTemplates.service_status_updated,
@@ -219,6 +227,51 @@ class RideService:
             currency=ride.currency,
         )
         return ride
+
+
+    @staticmethod
+    def update_driver_location(ride, driver_profile, latitude, longitude):
+        ride = RideService._lock_driver_ride(ride, driver_profile)
+        if ride.status not in (RideStatus.ACCEPTED, RideStatus.ARRIVED, RideStatus.IN_PROGRESS):
+            raise ValidationError('Driver location can only be updated for active assigned rides.')
+        ride.mark_driver_location(latitude, longitude)
+        RideService.broadcast_location(ride)
+        return ride
+
+    @staticmethod
+    def broadcast_status(ride, message='', actor_user=None):
+        channel_layer = get_channel_layer()
+        if channel_layer is None:
+            return False
+        async_to_sync(channel_layer.group_send)(
+            ride_tracking_group_name(ride.id),
+            {
+                'type': 'ride.status',
+                'ride_id': str(ride.id),
+                'status': ride.status,
+                'message': message,
+                'actor_user_id': str(actor_user.id) if actor_user else None,
+                'timestamp': timezone.now().isoformat(),
+            },
+        )
+        return True
+
+    @staticmethod
+    def broadcast_location(ride):
+        channel_layer = get_channel_layer()
+        if channel_layer is None:
+            return False
+        async_to_sync(channel_layer.group_send)(
+            ride_tracking_group_name(ride.id),
+            {
+                'type': 'ride.location',
+                'ride_id': str(ride.id),
+                'latitude': str(ride.driver_current_latitude),
+                'longitude': str(ride.driver_current_longitude),
+                'driver_location_updated_at': ride.driver_location_updated_at.isoformat() if ride.driver_location_updated_at else None,
+            },
+        )
+        return True
 
     @staticmethod
     def _lock_driver_ride(ride, driver_profile):
