@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.providers',
     'apps.rides',
+    'apps.food',
     'apps.notifications',
 ]
 

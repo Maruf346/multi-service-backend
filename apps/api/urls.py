@@ -16,6 +16,9 @@ urlpatterns = [
     # Rides
     path('rides/', include(('apps.rides.urls', 'rides'), namespace='rides')),
 
+    # Food
+    path('food/', include(('apps.food.urls', 'food'), namespace='food')),
+
     # Notifications
     path('notifications/', include('apps.notifications.urls')),
 
