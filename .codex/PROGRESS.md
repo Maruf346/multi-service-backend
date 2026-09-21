@@ -29,6 +29,7 @@ In Progress
 - [x] Added service-specific SuperAdmin provider profile list/retrieve endpoints for dashboards
 - [x] Added ride service foundation with request, matching, provider lifecycle, payment status, and review APIs
 - [x] Added ride WebSocket tracking for accepted customer-driver rides and live driver location updates
+- [x] Added food service foundation with restaurant menu, ordering, milestones, item reviews, and order tracking APIs
 
 ---
 
@@ -86,14 +87,14 @@ After the foundation is stable:
 
 - [ ] Restaurant onboarding
 - [ ] Restaurant approval
-- [ ] Menu categories
-- [ ] Food items
-- [ ] Cart
-- [ ] Orders
-- [ ] Order lifecycle
+- [x] Menu categories
+- [x] Food items
+- [x] Cart / order item selection
+- [x] Orders
+- [x] Order lifecycle
 - [ ] Courier assignment
 - [x] Live tracking
-- [ ] Food ratings
+- [x] Food ratings
 
 ### Courier
 

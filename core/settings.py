@@ -345,6 +345,12 @@ SPECTACULAR_SETTINGS = {
     # Postman friendly settings
     'COMPONENT_SPLIT_REQUEST': True,
     'SORT_OPERATIONS': False,
+    'ENUM_NAME_OVERRIDES': {
+        'RideStatusEnum': 'apps.rides.models.RideStatus.choices',
+        'RidePaymentStatusEnum': 'apps.rides.models.RidePaymentStatus.choices',
+        'FoodOrderStatusEnum': 'apps.food.models.FoodOrderStatus.choices',
+        'FoodPaymentStatusEnum': 'apps.food.models.FoodPaymentStatus.choices',
+    },
 }
 
 
