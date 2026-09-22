@@ -19,6 +19,9 @@ urlpatterns = [
     # Food
     path('food/', include(('apps.food.urls', 'food'), namespace='food')),
 
+    # Courier
+    path('courier/', include(('apps.courier.urls', 'courier'), namespace='courier')),
+
     # Notifications
     path('notifications/', include('apps.notifications.urls')),
 

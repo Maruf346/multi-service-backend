@@ -30,6 +30,7 @@ In Progress
 - [x] Added ride service foundation with request, matching, provider lifecycle, payment status, and review APIs
 - [x] Added ride WebSocket tracking for accepted customer-driver rides and live driver location updates
 - [x] Added food service foundation with restaurant menu, ordering, milestones, item reviews, and order tracking APIs
+- [x] Added courier service foundation with provider selection, delivery requests, status lifecycle, pickup PIN, tracking, reviews, stats, and admin APIs
 
 ---
 
@@ -65,7 +66,7 @@ After the foundation is stable:
 - [x] Provider onboarding foundation
 - [x] SuperAdmin approval foundation
 - [ ] Favorites
-- [ ] Ratings / reviews
+- [x] Ratings / reviews
 - [ ] Payment-method foundation
 - [ ] File/media handling
 - [ ] Location handling
@@ -100,14 +101,14 @@ After the foundation is stable:
 
 - [ ] Courier onboarding
 - [ ] Courier approval
-- [ ] Delivery requests
-- [ ] Package details
-- [ ] Assignment
-- [ ] Delivery lifecycle
-- [ ] Tracking
-- [ ] Pickup PIN
-- [ ] History
-- [ ] Ratings
+- [x] Delivery requests
+- [x] Package details
+- [x] Assignment
+- [x] Delivery lifecycle
+- [x] Tracking
+- [x] Pickup PIN
+- [x] History
+- [x] Ratings
 
 ### Car Rental
 
@@ -120,7 +121,7 @@ After the foundation is stable:
 - [ ] Pricing / security deposit
 - [ ] Booking lifecycle
 - [ ] Rental history
-- [ ] Ratings
+- [x] Ratings
 
 ### Property
 
@@ -133,7 +134,7 @@ After the foundation is stable:
 - [ ] Property booking
 - [ ] Booking lifecycle
 - [ ] Booking history
-- [ ] Ratings
+- [x] Ratings
 
 ---
 

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'apps.providers',
     'apps.rides',
     'apps.food',
+    'apps.courier',
     'apps.notifications',
 ]
 
@@ -349,7 +350,8 @@ SPECTACULAR_SETTINGS = {
         'RideStatusEnum': 'apps.rides.models.RideStatus.choices',
         'RidePaymentStatusEnum': 'apps.rides.models.RidePaymentStatus.choices',
         'FoodOrderStatusEnum': 'apps.food.models.FoodOrderStatus.choices',
-        'FoodPaymentStatusEnum': 'apps.food.models.FoodPaymentStatus.choices',
+        'CashPaymentStatusEnum': 'apps.food.models.FoodPaymentStatus.choices',
+        'CourierDeliveryStatusEnum': 'apps.courier.models.CourierDeliveryStatus.choices',
     },
 }
 
