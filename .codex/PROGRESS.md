@@ -31,6 +31,7 @@ In Progress
 - [x] Added ride WebSocket tracking for accepted customer-driver rides and live driver location updates
 - [x] Added food service foundation with restaurant menu, ordering, milestones, item reviews, and order tracking APIs
 - [x] Added courier service foundation with provider selection, delivery requests, status lifecycle, pickup PIN, tracking, reviews, stats, and admin APIs
+- [x] Added car rental service foundation with providers, vehicle CRUD/media, booking requests, pricing, provider actions, reviews, stats, and admin APIs
 
 ---
 
@@ -114,13 +115,13 @@ After the foundation is stable:
 
 - [ ] Rental provider onboarding
 - [ ] Rental provider approval
-- [ ] Vehicle CRUD
-- [ ] Vehicle media
-- [ ] Vehicle availability
-- [ ] Rental booking
-- [ ] Pricing / security deposit
-- [ ] Booking lifecycle
-- [ ] Rental history
+- [x] Vehicle CRUD
+- [x] Vehicle media
+- [x] Vehicle availability
+- [x] Rental booking
+- [x] Pricing / security deposit
+- [x] Booking lifecycle
+- [x] Rental history
 - [x] Ratings
 
 ### Property
@@ -132,7 +133,7 @@ After the foundation is stable:
 - [ ] Amenities
 - [ ] Availability
 - [ ] Property booking
-- [ ] Booking lifecycle
+- [x] Booking lifecycle
 - [ ] Booking history
 - [x] Ratings
 

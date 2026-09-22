@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.rides',
     'apps.food',
     'apps.courier',
+    'apps.car_rentals',
     'apps.notifications',
 ]
 
@@ -352,6 +353,8 @@ SPECTACULAR_SETTINGS = {
         'FoodOrderStatusEnum': 'apps.food.models.FoodOrderStatus.choices',
         'CashPaymentStatusEnum': 'apps.food.models.FoodPaymentStatus.choices',
         'CourierDeliveryStatusEnum': 'apps.courier.models.CourierDeliveryStatus.choices',
+        'CarRentalBookingStatusEnum': 'apps.car_rentals.models.CarRentalBookingStatus.choices',
+        'CarRentalPaymentStatusEnum': 'apps.car_rentals.models.CarRentalPaymentStatus.choices',
     },
 }
 

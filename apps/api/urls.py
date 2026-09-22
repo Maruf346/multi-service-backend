@@ -22,6 +22,9 @@ urlpatterns = [
     # Courier
     path('courier/', include(('apps.courier.urls', 'courier'), namespace='courier')),
 
+    # Car Rentals
+    path('car-rentals/', include(('apps.car_rentals.urls', 'car_rentals'), namespace='car_rentals')),
+
     # Notifications
     path('notifications/', include('apps.notifications.urls')),
 
