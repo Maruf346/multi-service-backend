@@ -25,6 +25,9 @@ urlpatterns = [
     # Car Rentals
     path('car-rentals/', include(('apps.car_rentals.urls', 'car_rentals'), namespace='car_rentals')),
 
+    # Room Services
+    path('room-services/', include(('apps.room_services.urls', 'room_services'), namespace='room_services')),
+
     # Notifications
     path('notifications/', include('apps.notifications.urls')),
 

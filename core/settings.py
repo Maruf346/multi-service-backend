@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'apps.food',
     'apps.courier',
     'apps.car_rentals',
+    'apps.room_services',
     'apps.notifications',
 ]
 

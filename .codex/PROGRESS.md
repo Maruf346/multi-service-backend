@@ -32,6 +32,7 @@ In Progress
 - [x] Added food service foundation with restaurant menu, ordering, milestones, item reviews, and order tracking APIs
 - [x] Added courier service foundation with provider selection, delivery requests, status lifecycle, pickup PIN, tracking, reviews, stats, and admin APIs
 - [x] Added car rental service foundation with providers, vehicle CRUD/media, booking requests, pricing, provider actions, reviews, stats, and admin APIs
+- [x] Added room service foundation with providers, listing CRUD/photos, datewise availability, booking requests, pricing, provider actions, reviews, stats, and admin APIs
 
 ---
 
@@ -128,13 +129,13 @@ After the foundation is stable:
 
 - [ ] Property owner onboarding
 - [ ] Property owner approval
-- [ ] Property CRUD
-- [ ] Property media
-- [ ] Amenities
-- [ ] Availability
-- [ ] Property booking
+- [x] Property CRUD
+- [x] Property media
+- [x] Amenities
+- [x] Availability
+- [x] Property booking
 - [x] Booking lifecycle
-- [ ] Booking history
+- [x] Booking history
 - [x] Ratings
 
 ---
