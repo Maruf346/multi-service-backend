@@ -33,6 +33,8 @@ In Progress
 - [x] Added courier service foundation with provider selection, delivery requests, status lifecycle, pickup PIN, tracking, reviews, stats, and admin APIs
 - [x] Added car rental service foundation with providers, vehicle CRUD/media, booking requests, pricing, provider actions, reviews, stats, and admin APIs
 - [x] Added room service foundation with providers, listing CRUD/photos, datewise availability, booking requests, pricing, provider actions, reviews, stats, and admin APIs
+- [x] Added GoSwift Docker, production compose, Nginx, env template, and GitHub Actions ECR/EC2 deployment scaffold
+- [x] Added step-by-step GoSwift AWS deployment guide for EC2, ECR, RDS, S3, Redis, Celery, Gmail SMTP, and GitHub Actions
 
 ---
 
@@ -148,8 +150,9 @@ After the foundation is stable:
 - [ ] Stripe
 - [ ] Maps / location API
 - [ ] AWS S3
-- [ ] Docker
-- [ ] ECR
+- [x] Docker
+- [x] ECR deployment scaffold
+- [x] AWS deployment guide
 - [ ] EC2 deployment
 
 ---

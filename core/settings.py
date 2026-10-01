@@ -139,12 +139,15 @@ WEBSOCKET_ALLOWED_ORIGINS = [
 ]
 
 # CORS configs
-CSRF_TRUSTED_ORIGINS = [
+_env_csrf_trusted_origins = [
+    origin.strip()
+    for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+CSRF_TRUSTED_ORIGINS = _env_csrf_trusted_origins or [
     f"http://{host}" for host in ALLOWED_HOSTS if host not in ('localhost', '127.0.0.1', '')
 ] + [
     f"https://{host}" for host in ALLOWED_HOSTS if host not in ('localhost', '127.0.0.1', '')
-] + [
-    "https://api.herdomain.com"
 ]
 
 
@@ -247,12 +250,12 @@ USE_S3_MEDIA = os.getenv('USE_S3_MEDIA', 'False') == 'True'
 
 if USE_S3_MEDIA:
     # S3 media storage - production only
-    AWS_ACCESS_KEY_ID       = os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY   = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_ACCESS_KEY_ID       = os.getenv('AWS_ACCESS_KEY_ID') or None
+    AWS_SECRET_ACCESS_KEY   = os.getenv('AWS_SECRET_ACCESS_KEY') or None
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME', 'multi-service-media')
     AWS_S3_REGION_NAME      = os.getenv('AWS_S3_REGION_NAME', 'eu-north-1')
     AWS_S3_CUSTOM_DOMAIN    = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
-    AWS_QUERYSTRING_AUTH    = False
+    AWS_QUERYSTRING_AUTH    = os.getenv('AWS_QUERYSTRING_AUTH', 'True') == 'True'
     AWS_S3_OBJECT_PARAMETERS = {
         'CacheControl': 'max-age=86400',  # 1 day cache on media files
     }
@@ -268,7 +271,7 @@ if USE_S3_MEDIA:
                 "bucket_name": AWS_STORAGE_BUCKET_NAME,
                 "region_name": AWS_S3_REGION_NAME,
                 "location": "media",        # all uploads go into /media/ prefix in the bucket
-                "querystring_auth": False,
+                "querystring_auth": AWS_QUERYSTRING_AUTH,
                 "file_overwrite": False,    # never overwrite existing files - add suffix instead
                 # REMOVED: "default_acl": "public-read",
             },
