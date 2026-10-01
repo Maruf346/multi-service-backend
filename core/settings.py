@@ -243,6 +243,8 @@ USE_TZ = True
 
 STATIC_URL  = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Jazzmin references a bootswatch directory path; allow non-manifest static URLs for that case.
+WHITENOISE_MANIFEST_STRICT = os.getenv('WHITENOISE_MANIFEST_STRICT', 'False') == 'True'
 
 
 
@@ -383,7 +385,7 @@ JAZZMIN_SETTINGS = {
 
 JAZZMIN_UI_TWEAKS = {
     "theme": "lux",
-    "dark_mode_theme": "darkly",
+    "default_theme_mode": "auto",
     "navbar_small_text": False,
     "footer_small_text": False,
     "body_small_text": False,
