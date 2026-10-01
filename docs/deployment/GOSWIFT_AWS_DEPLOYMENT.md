@@ -838,6 +838,9 @@ Paste and update this template:
 SECRET_KEY=CHANGE_ME_TO_A_LONG_RANDOM_SECRET
 DEBUG=False
 ALLOWED_HOSTS=YOUR_ELASTIC_IP,localhost,127.0.0.1
+SECURE_SSL_REDIRECT=False
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
 
 CORS_ALLOWED_ORIGINS=http://YOUR_ELASTIC_IP
 WEBSOCKET_ALLOWED_ORIGINS=http://YOUR_ELASTIC_IP,ws://YOUR_ELASTIC_IP
@@ -910,6 +913,12 @@ WEBSOCKET_ALLOWED_ORIGINS
 
 CSRF_TRUSTED_ORIGINS
   Trusted browser origins for CSRF-sensitive endpoints/admin.
+
+SECURE_SSL_REDIRECT
+  False while using http://Elastic-IP. Set True only after HTTPS is working.
+
+SESSION_COOKIE_SECURE / CSRF_COOKIE_SECURE
+  False while using http://Elastic-IP. Set both True after HTTPS is working.
 
 BASE_URL
   Backend base URL used when building absolute links.
@@ -1589,6 +1598,9 @@ ALLOWED_HOSTS=api.yourdomain.com,YOUR_ELASTIC_IP,localhost,127.0.0.1
 CORS_ALLOWED_ORIGINS=https://YOUR_FRONTEND_DOMAIN
 WEBSOCKET_ALLOWED_ORIGINS=https://YOUR_FRONTEND_DOMAIN,wss://YOUR_FRONTEND_DOMAIN
 CSRF_TRUSTED_ORIGINS=https://api.yourdomain.com
+SECURE_SSL_REDIRECT=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
 BASE_URL=https://api.yourdomain.com/
 FRONTEND_URL=https://YOUR_FRONTEND_DOMAIN
 ```

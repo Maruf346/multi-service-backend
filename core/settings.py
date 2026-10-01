@@ -91,11 +91,11 @@ ASGI_APPLICATION = 'core.asgi.application'
 
 # SECURITY SETTINGS FOR PRODUCTION
 if not DEBUG:
-    SECURE_SSL_REDIRECT          = False  # Nginx handles SSL termination
+    SECURE_SSL_REDIRECT          = os.getenv('SECURE_SSL_REDIRECT', 'False') == 'True'
     SECURE_PROXY_SSL_HEADER      = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST         = True
-    SESSION_COOKIE_SECURE        = True
-    CSRF_COOKIE_SECURE           = True
+    SESSION_COOKIE_SECURE        = os.getenv('SESSION_COOKIE_SECURE', 'True') == 'True'
+    CSRF_COOKIE_SECURE           = os.getenv('CSRF_COOKIE_SECURE', 'True') == 'True'
     SECURE_BROWSER_XSS_FILTER    = True
     SECURE_CONTENT_TYPE_NOSNIFF  = True
     X_FRAME_OPTIONS              = "DENY"
