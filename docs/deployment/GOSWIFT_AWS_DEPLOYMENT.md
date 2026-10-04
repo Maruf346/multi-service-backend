@@ -908,9 +908,9 @@ SECURE_SSL_REDIRECT=False
 SESSION_COOKIE_SECURE=False
 CSRF_COOKIE_SECURE=False
 
-CORS_ALLOWED_ORIGINS=http://YOUR_ELASTIC_IP
+CORS_ALLOWED_ORIGINS=http://YOUR_ELASTIC_IP,http://goswift-dashboard-prod.s3-website-us-east-1.amazonaws.com
 WEBSOCKET_ALLOWED_ORIGINS=http://YOUR_ELASTIC_IP,ws://YOUR_ELASTIC_IP
-CSRF_TRUSTED_ORIGINS=http://YOUR_ELASTIC_IP
+CSRF_TRUSTED_ORIGINS=http://YOUR_ELASTIC_IP,http://goswift-dashboard-prod.s3-website-us-east-1.amazonaws.com
 
 BASE_URL=http://YOUR_ELASTIC_IP/
 FRONTEND_URL=http://YOUR_FRONTEND_OR_PLACEHOLDER
@@ -1766,4 +1766,5 @@ Security follow-ups after first successful deploy:
 - [ ] Add domain when purchased
 - [ ] Add SSL/HTTPS
 - [ ] Switch WebSockets from `ws://` to `wss://`
+
 

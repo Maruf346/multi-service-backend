@@ -180,6 +180,8 @@ None.
 
 # Notes
 
+- 2026-10-04: Fixed invalid CORS default in settings and documented the S3-hosted admin dashboard origin for production CORS/CSRF configuration. Django system check passed.
+
 - 2026-10-04: Added graceful ClientError handling for user and SuperAdmin profile image uploads so S3 bucket misconfiguration returns a 400 detail instead of a 500. Local syntax and Django checks passed.
 
 - users model changes are ready for review, but migrations have not been generated or applied yet by request.
@@ -202,3 +204,4 @@ None.
 # Current Development Target
 
 **Establish and verify the Django backend foundation before beginning the service-specific modules.**
+

@@ -109,8 +109,7 @@ if not DEBUG:
 # CORS SETTINGS
 CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000',
-    'http://goswift-dashboard-prod.s3-website-us-east-1.amazonaws.com',
+    'http://localhost:3000,http://goswift-dashboard-prod.s3-website-us-east-1.amazonaws.com',
 ).split(',')
 CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS if origin.strip()]
 
@@ -630,3 +629,4 @@ LOGGING = {
         },
     },
 }
+
