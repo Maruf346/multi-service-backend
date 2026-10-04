@@ -2,8 +2,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+from .views import AdminDashboardSummaryView
 
 urlpatterns = [
+    path('admin/dashboard/summary/', AdminDashboardSummaryView.as_view(), name='admin-dashboard-summary'),
+    
     # Auth (login / logout / refresh)
     path('auth/', include('apps.users.auth_urls')),
 

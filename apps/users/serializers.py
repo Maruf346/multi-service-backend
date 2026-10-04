@@ -3,6 +3,8 @@ from django.contrib.auth.password_validation import validate_password
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from .models import UserRole
+
 User = get_user_model()
 
 
@@ -334,3 +336,46 @@ class FavoriteListResponseSerializer(serializers.Serializer):
     courier = FavoriteCourierProviderItemSerializer(many=True)
     car_rentals = FavoriteRentalVehicleItemSerializer(many=True)
     properties = FavoritePropertyListingItemSerializer(many=True)
+class AdminUserSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'username', 'full_name', 'first_name', 'last_name',
+            'phone_number', 'role', 'is_active', 'is_staff', 'is_superuser',
+            'profile_image', 'street_address', 'city', 'state', 'postal_code',
+            'country', 'latitude', 'longitude', 'date_joined', 'last_login',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = fields
+
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_profile_image(self, obj):
+        if not obj.profile_image:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.profile_image.url)
+        return obj.profile_image.url
+
+
+class AdminUserListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = AdminUserSerializer(many=True)
+
+
+class AdminUserStatusUpdateSerializer(serializers.Serializer):
+    is_active = serializers.BooleanField()
+
+
+class SuperAdminProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'full_name', 'first_name', 'last_name', 'phone_number', 'profile_image',
+            'street_address', 'city', 'state', 'postal_code', 'country', 'latitude', 'longitude',
+        ]
+        extra_kwargs = {field: {'required': False} for field in fields}

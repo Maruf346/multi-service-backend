@@ -1,4 +1,5 @@
 import logging
+from django.shortcuts import get_object_or_404
 
 from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -578,3 +579,120 @@ class FavoriteToggleView(APIView):
             provider__is_active=True,
         ).first()
         return UserFavoritePropertyListing, 'listing', target
+
+
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from drf_spectacular.utils import OpenApiParameter
+from rest_framework.settings import api_settings
+from apps.users.permissions import IsSuperAdmin
+from .models import UserRole
+from .serializers import AdminUserListResponseSerializer, AdminUserSerializer, AdminUserStatusUpdateSerializer, SuperAdminProfileUpdateSerializer
+
+
+@extend_schema(
+    tags=['Users - SuperAdmin'],
+    summary='List users for admin dashboard',
+    parameters=[
+        OpenApiParameter('page', int, required=False),
+        OpenApiParameter('page_size', int, required=False),
+        OpenApiParameter('search', str, required=False, description='Search email, name, username, or phone.'),
+        OpenApiParameter('role', str, enum=[choice.value for choice in UserRole], required=False),
+        OpenApiParameter('is_active', bool, required=False),
+    ],
+    responses={200: AdminUserListResponseSerializer},
+)
+class AdminUserListView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+
+    @extend_schema(operation_id='admin_list_users')
+    def get(self, request):
+        UserModel = get_user_model()
+        queryset = UserModel.objects.all().order_by('-created_at')
+
+        search = (request.query_params.get('search') or '').strip()
+        if search:
+            queryset = queryset.filter(
+                Q(email__icontains=search)
+                | Q(username__icontains=search)
+                | Q(full_name__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(phone_number__icontains=search)
+            )
+
+        role = (request.query_params.get('role') or '').strip()
+        if role:
+            queryset = queryset.filter(role=role)
+
+        is_active = request.query_params.get('is_active')
+        if is_active is not None and str(is_active).strip() != '':
+            queryset = queryset.filter(is_active=str(is_active).strip().lower() in ('1', 'true', 'yes'))
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = AdminUserSerializer(page, many=True, context={'request': request})
+        return paginator.get_paginated_response(serializer.data)
+
+
+@extend_schema(
+    tags=['Users - SuperAdmin'],
+    summary='Retrieve a user for admin dashboard',
+    responses={200: AdminUserSerializer, 404: OpenApiResponse(description='User not found')},
+)
+class AdminUserDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    @extend_schema(operation_id='admin_retrieve_user')
+    def get(self, request, pk):
+        UserModel = get_user_model()
+        user = get_object_or_404(UserModel, pk=pk)
+        return Response(AdminUserSerializer(user, context={'request': request}).data)
+
+
+@extend_schema(
+    tags=['Users - SuperAdmin'],
+    summary='Update user active status',
+    request=AdminUserStatusUpdateSerializer,
+    responses={200: AdminUserSerializer, 404: OpenApiResponse(description='User not found')},
+)
+class AdminUserStatusUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    @extend_schema(operation_id='admin_update_user_status')
+    def patch(self, request, pk):
+        UserModel = get_user_model()
+        user = get_object_or_404(UserModel, pk=pk)
+        serializer = AdminUserStatusUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user.is_active = serializer.validated_data['is_active']
+        user.save(update_fields=['is_active', 'updated_at'])
+        return Response(AdminUserSerializer(user, context={'request': request}).data)
+
+
+@extend_schema(
+    tags=['Users - SuperAdmin'],
+    summary='Get my SuperAdmin profile',
+    responses={200: AdminUserSerializer},
+)
+class SuperAdminProfileView(APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+    parser_classes = [JSONParser, FormParser, MultiPartParser]
+
+    @extend_schema(operation_id='admin_retrieve_my_profile')
+    def get(self, request):
+        return Response(AdminUserSerializer(request.user, context={'request': request}).data)
+
+    @extend_schema(
+        tags=['Users - SuperAdmin'],
+        operation_id='admin_update_my_profile',
+        summary='Patch my SuperAdmin profile',
+        request=SuperAdminProfileUpdateSerializer,
+        responses={200: AdminUserSerializer},
+    )
+    def patch(self, request):
+        serializer = SuperAdminProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(AdminUserSerializer(request.user, context={'request': request}).data)

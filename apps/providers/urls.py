@@ -25,6 +25,16 @@ from .views import (
     SuperAdminRestaurantProviderProfileListView,
     SuperAdminRideProviderProfileDetailView,
     SuperAdminRideProviderProfileListView,
+    SuperAdminPropertyProviderRejectView,
+    SuperAdminPropertyProviderApproveView,
+    SuperAdminRentalProviderRejectView,
+    SuperAdminRentalProviderApproveView,
+    SuperAdminCourierProviderRejectView,
+    SuperAdminCourierProviderApproveView,
+    SuperAdminRestaurantProviderRejectView,
+    SuperAdminRestaurantProviderApproveView,
+    SuperAdminRideProviderRejectView,
+    SuperAdminRideProviderApproveView,
 )
 
 app_name = 'providers'
@@ -52,6 +62,16 @@ urlpatterns = [
     path('admin/properties/profiles/', SuperAdminPropertyProviderProfileListView.as_view(), name='admin-properties-profiles'),
     path('admin/properties/profiles/<int:pk>/', SuperAdminPropertyProviderProfileDetailView.as_view(), name='admin-properties-profile-detail'),
 
+    path('admin/rides/profiles/<int:pk>/approve/', SuperAdminRideProviderApproveView.as_view(), name='admin-rides-profile-approve'),
+    path('admin/rides/profiles/<int:pk>/reject/', SuperAdminRideProviderRejectView.as_view(), name='admin-rides-profile-reject'),
+    path('admin/restaurants/profiles/<int:pk>/approve/', SuperAdminRestaurantProviderApproveView.as_view(), name='admin-restaurants-profile-approve'),
+    path('admin/restaurants/profiles/<int:pk>/reject/', SuperAdminRestaurantProviderRejectView.as_view(), name='admin-restaurants-profile-reject'),
+    path('admin/courier/profiles/<int:pk>/approve/', SuperAdminCourierProviderApproveView.as_view(), name='admin-courier-profile-approve'),
+    path('admin/courier/profiles/<int:pk>/reject/', SuperAdminCourierProviderRejectView.as_view(), name='admin-courier-profile-reject'),
+    path('admin/rentals/profiles/<int:pk>/approve/', SuperAdminRentalProviderApproveView.as_view(), name='admin-rentals-profile-approve'),
+    path('admin/rentals/profiles/<int:pk>/reject/', SuperAdminRentalProviderRejectView.as_view(), name='admin-rentals-profile-reject'),
+    path('admin/properties/profiles/<int:pk>/approve/', SuperAdminPropertyProviderApproveView.as_view(), name='admin-properties-profile-approve'),
+    path('admin/properties/profiles/<int:pk>/reject/', SuperAdminPropertyProviderRejectView.as_view(), name='admin-properties-profile-reject'),
     path('applications/', SuperAdminProviderProfileListView.as_view(), name='applications'),
     path('applications/<str:service_category>/<int:pk>/', SuperAdminProviderProfileDetailView.as_view(), name='application-detail'),
     path('applications/<str:service_category>/<int:pk>/approve/', SuperAdminProviderApproveView.as_view(), name='application-approve'),

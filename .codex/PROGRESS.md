@@ -36,6 +36,7 @@ In Progress
 - [x] Added GoSwift Docker, production compose, Nginx, env template, and GitHub Actions ECR/EC2 deployment scaffold
 - [x] Added step-by-step GoSwift AWS deployment guide for EC2, ECR, RDS, S3, Redis, Celery, Gmail SMTP, and GitHub Actions
 - [x] Added user favorites foundation with toggle/list APIs for rides, food, courier, car rentals, and properties
+- [x] Added SuperAdmin dashboard APIs for user management, profile, provider decisions, support ticket resolution, and dashboard summary
 
 ---
 

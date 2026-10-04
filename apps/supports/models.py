@@ -5,6 +5,12 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 
 
+class SupportTicketStatus(models.TextChoices):
+    PENDING = 'pending', 'Pending'
+    RESOLVED = 'resolved', 'Resolved'
+
+
+
     
 class SupportTicket(models.Model):
     """
@@ -22,6 +28,7 @@ class SupportTicket(models.Model):
     email = models.EmailField()
     message = models.TextField()
     attachment = models.FileField(upload_to='support_attachments/', null=True, blank=True)
+    status = models.CharField(max_length=20, choices=SupportTicketStatus.choices, default=SupportTicketStatus.PENDING)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

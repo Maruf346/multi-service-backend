@@ -619,3 +619,111 @@ def _get_profile_and_serializer(service_category, pk):
     if not model_class or not serializer_class:
         raise Http404
     return get_object_or_404(model_class.objects.select_related('user', 'reviewed_by'), pk=pk), serializer_class
+
+class SuperAdminFixedProviderActionMixin:
+    service_category = None
+
+    def get_profile_and_serializer(self, pk):
+        return _get_profile_and_serializer(self.service_category, pk)
+
+
+class SuperAdminFixedProviderApproveView(SuperAdminFixedProviderActionMixin, APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def approve_profile(self, request, pk):
+        profile, serializer_class = self.get_profile_and_serializer(pk)
+        serializer = ProviderReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        profile = ProviderProfileService.approve(profile, reviewer=request.user, note=serializer.validated_data.get('note', ''))
+        return Response(serializer_class(profile, context={'request': request}).data)
+
+
+class SuperAdminFixedProviderRejectView(SuperAdminFixedProviderActionMixin, APIView):
+    permission_classes = [IsAuthenticated, IsSuperAdmin]
+
+    def reject_profile(self, request, pk):
+        profile, serializer_class = self.get_profile_and_serializer(pk)
+        serializer = ProviderReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        profile = ProviderProfileService.reject(profile, reviewer=request.user, note=serializer.validated_data.get('note', ''))
+        return Response(serializer_class(profile, context={'request': request}).data)
+
+
+class SuperAdminRideProviderApproveView(SuperAdminFixedProviderApproveView):
+    service_category = ProviderServiceCategory.RIDES
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_ride_provider_profile', summary='Approve ride provider profile', request=ProviderReviewSerializer, responses={200: RideProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminRideProviderRejectView(SuperAdminFixedProviderRejectView):
+    service_category = ProviderServiceCategory.RIDES
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_ride_provider_profile', summary='Reject ride provider profile', request=ProviderReviewSerializer, responses={200: RideProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminRestaurantProviderApproveView(SuperAdminFixedProviderApproveView):
+    service_category = ProviderServiceCategory.RESTAURANTS
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_restaurant_provider_profile', summary='Approve restaurant provider profile', request=ProviderReviewSerializer, responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminRestaurantProviderRejectView(SuperAdminFixedProviderRejectView):
+    service_category = ProviderServiceCategory.RESTAURANTS
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_restaurant_provider_profile', summary='Reject restaurant provider profile', request=ProviderReviewSerializer, responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminCourierProviderApproveView(SuperAdminFixedProviderApproveView):
+    service_category = ProviderServiceCategory.COURIER
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_courier_provider_profile', summary='Approve courier provider profile', request=ProviderReviewSerializer, responses={200: CourierProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminCourierProviderRejectView(SuperAdminFixedProviderRejectView):
+    service_category = ProviderServiceCategory.COURIER
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_courier_provider_profile', summary='Reject courier provider profile', request=ProviderReviewSerializer, responses={200: CourierProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminRentalProviderApproveView(SuperAdminFixedProviderApproveView):
+    service_category = ProviderServiceCategory.RENTALS
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_rental_provider_profile', summary='Approve rental provider profile', request=ProviderReviewSerializer, responses={200: RentalProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminRentalProviderRejectView(SuperAdminFixedProviderRejectView):
+    service_category = ProviderServiceCategory.RENTALS
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_rental_provider_profile', summary='Reject rental provider profile', request=ProviderReviewSerializer, responses={200: RentalProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminPropertyProviderApproveView(SuperAdminFixedProviderApproveView):
+    service_category = ProviderServiceCategory.PROPERTIES
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_property_provider_profile', summary='Approve property provider profile', request=ProviderReviewSerializer, responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminPropertyProviderRejectView(SuperAdminFixedProviderRejectView):
+    service_category = ProviderServiceCategory.PROPERTIES
+
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_property_provider_profile', summary='Reject property provider profile', request=ProviderReviewSerializer, responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
