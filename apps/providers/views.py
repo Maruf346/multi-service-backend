@@ -322,11 +322,12 @@ class SuperAdminTypedProviderProfileListView(APIView):
     model_class = None
     serializer_class = None
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    default_onboarding_status = ''
 
     def get_queryset(self, request):
         queryset = self.model_class.objects.select_related('user', 'reviewed_by').order_by('-created_at')
 
-        onboarding_status = (request.query_params.get('onboarding_status') or '').strip()
+        onboarding_status = (request.query_params.get('onboarding_status') or self.default_onboarding_status or '').strip()
         if onboarding_status:
             queryset = queryset.filter(onboarding_status=onboarding_status)
 
@@ -520,6 +521,7 @@ class SuperAdminPropertyProviderProfileDetailView(SuperAdminTypedProviderProfile
 
 class SuperAdminProviderProfileListView(APIView):
     permission_classes = [IsAuthenticated, IsSuperAdmin]
+    default_onboarding_status = ''
 
     @extend_schema(
         tags=['Providers - SuperAdmin'],
@@ -544,7 +546,7 @@ class SuperAdminProviderProfileListView(APIView):
             if not model_class or not serializer_class:
                 continue
             queryset = model_class.objects.select_related('user', 'reviewed_by').order_by('-created_at')
-            onboarding_status = (request.query_params.get('onboarding_status') or '').strip()
+            onboarding_status = (request.query_params.get('onboarding_status') or self.default_onboarding_status or '').strip()
             if onboarding_status:
                 queryset = queryset.filter(onboarding_status=onboarding_status)
             is_active = request.query_params.get('is_active')
@@ -725,5 +727,156 @@ class SuperAdminPropertyProviderRejectView(SuperAdminFixedProviderRejectView):
     service_category = ProviderServiceCategory.PROPERTIES
 
     @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_property_provider_profile', summary='Reject property provider profile', request=ProviderReviewSerializer, responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_incoming_ride_provider_requests',
+        summary='List incoming ride provider approval requests',
+        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        responses={200: RideProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminRideProviderRequestListView(SuperAdminRideProviderProfileListView):
+    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_incoming_restaurant_provider_requests',
+        summary='List incoming restaurant provider approval requests',
+        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        responses={200: RestaurantProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminRestaurantProviderRequestListView(SuperAdminRestaurantProviderProfileListView):
+    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_incoming_courier_provider_requests',
+        summary='List incoming courier provider approval requests',
+        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        responses={200: CourierProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminCourierProviderRequestListView(SuperAdminCourierProviderProfileListView):
+    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_incoming_rental_provider_requests',
+        summary='List incoming car rental provider approval requests',
+        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        responses={200: RentalProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminRentalProviderRequestListView(SuperAdminRentalProviderProfileListView):
+    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=['Providers - SuperAdmin'],
+        operation_id='admin_list_incoming_property_provider_requests',
+        summary='List incoming property provider approval requests',
+        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        responses={200: PropertyProviderProfileListResponseSerializer},
+    )
+)
+class SuperAdminPropertyProviderRequestListView(SuperAdminPropertyProviderProfileListView):
+    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+class SuperAdminRideProviderRequestDetailView(SuperAdminRideProviderProfileDetailView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_retrieve_ride_provider_request', summary='Retrieve incoming ride provider approval request', responses={200: RideProviderProfileSerializer, 404: DetailSerializer})
+    def get(self, request, pk):
+        return super().get(request, pk)
+
+
+class SuperAdminRestaurantProviderRequestDetailView(SuperAdminRestaurantProviderProfileDetailView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_retrieve_restaurant_provider_request', summary='Retrieve incoming restaurant provider approval request', responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer})
+    def get(self, request, pk):
+        return super().get(request, pk)
+
+
+class SuperAdminCourierProviderRequestDetailView(SuperAdminCourierProviderProfileDetailView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_retrieve_courier_provider_request', summary='Retrieve incoming courier provider approval request', responses={200: CourierProviderProfileSerializer, 404: DetailSerializer})
+    def get(self, request, pk):
+        return super().get(request, pk)
+
+
+class SuperAdminRentalProviderRequestDetailView(SuperAdminRentalProviderProfileDetailView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_retrieve_rental_provider_request', summary='Retrieve incoming car rental provider approval request', responses={200: RentalProviderProfileSerializer, 404: DetailSerializer})
+    def get(self, request, pk):
+        return super().get(request, pk)
+
+
+class SuperAdminPropertyProviderRequestDetailView(SuperAdminPropertyProviderProfileDetailView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_retrieve_property_provider_request', summary='Retrieve incoming property provider approval request', responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer})
+    def get(self, request, pk):
+        return super().get(request, pk)
+
+
+class SuperAdminRideProviderRequestApproveView(SuperAdminRideProviderApproveView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_ride_provider_request', summary='Approve incoming ride provider request', request=ProviderReviewSerializer, responses={200: RideProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminRideProviderRequestRejectView(SuperAdminRideProviderRejectView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_ride_provider_request', summary='Reject incoming ride provider request', request=ProviderReviewSerializer, responses={200: RideProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminRestaurantProviderRequestApproveView(SuperAdminRestaurantProviderApproveView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_restaurant_provider_request', summary='Approve incoming restaurant provider request', request=ProviderReviewSerializer, responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminRestaurantProviderRequestRejectView(SuperAdminRestaurantProviderRejectView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_restaurant_provider_request', summary='Reject incoming restaurant provider request', request=ProviderReviewSerializer, responses={200: RestaurantProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminCourierProviderRequestApproveView(SuperAdminCourierProviderApproveView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_courier_provider_request', summary='Approve incoming courier provider request', request=ProviderReviewSerializer, responses={200: CourierProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminCourierProviderRequestRejectView(SuperAdminCourierProviderRejectView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_courier_provider_request', summary='Reject incoming courier provider request', request=ProviderReviewSerializer, responses={200: CourierProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminRentalProviderRequestApproveView(SuperAdminRentalProviderApproveView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_rental_provider_request', summary='Approve incoming car rental provider request', request=ProviderReviewSerializer, responses={200: RentalProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminRentalProviderRequestRejectView(SuperAdminRentalProviderRejectView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_rental_provider_request', summary='Reject incoming car rental provider request', request=ProviderReviewSerializer, responses={200: RentalProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.reject_profile(request, pk)
+
+
+class SuperAdminPropertyProviderRequestApproveView(SuperAdminPropertyProviderApproveView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_approve_property_provider_request', summary='Approve incoming property provider request', request=ProviderReviewSerializer, responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer})
+    def post(self, request, pk):
+        return self.approve_profile(request, pk)
+
+
+class SuperAdminPropertyProviderRequestRejectView(SuperAdminPropertyProviderRejectView):
+    @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_reject_property_provider_request', summary='Reject incoming property provider request', request=ProviderReviewSerializer, responses={200: PropertyProviderProfileSerializer, 404: DetailSerializer})
     def post(self, request, pk):
         return self.reject_profile(request, pk)
