@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'apps.car_rentals',
     'apps.room_services',
     'apps.notifications',
+    'apps.supports',
 ]
 
 MIDDLEWARE = [
