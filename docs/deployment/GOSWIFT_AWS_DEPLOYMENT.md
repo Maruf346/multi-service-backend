@@ -255,21 +255,87 @@ goswift-media-prod-yourname
 ```
 
 4. Select the same AWS region.
-5. Keep `Block all public access` enabled for the first deployment.
+5. For GoSwift image URLs that must be visible in the frontend, allow public reads only for safe image prefixes. Keep document prefixes private.
 
-The backend is configured to use signed media URLs by default, so keeping the bucket private is fine.
+Important: this project stores both public images and sensitive files in the same media bucket. Do not make the whole bucket public. Provider documents, ID files, permits, licenses, and support attachments must stay private.
 
-Later, if you want public media or CloudFront, update the storage policy separately.
-
-Recommended S3 env values:
+Recommended S3 env values for public frontend image URLs:
 
 ```env
 USE_S3_MEDIA=True
 AWS_STORAGE_BUCKET_NAME=goswift-media-prod-YOUR_SUFFIX
 AWS_S3_REGION_NAME=YOUR_AWS_REGION
-AWS_QUERYSTRING_AUTH=True
+AWS_QUERYSTRING_AUTH=False
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
+```
+
+`AWS_QUERYSTRING_AUTH=False` makes Django return clean media URLs. The bucket policy below decides which of those URLs can actually be opened publicly.
+
+In the bucket permissions page:
+
+1. Open the bucket.
+2. Go to `Permissions`.
+3. Under `Block public access`, choose `Edit`.
+4. Disable public access blocking for this bucket so a bucket policy can grant public reads.
+5. Save and acknowledge the warning.
+6. Keep `Object Ownership` as `Bucket owner enforced` if AWS selected it. Do not rely on object ACLs.
+7. Add this bucket policy, replacing the bucket name if needed:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowPublicReadForGoSwiftPublicImages",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": [
+        "arn:aws:s3:::goswift-media-prod/media/users/profile-images/*",
+        "arn:aws:s3:::goswift-media-prod/media/providers/rides/photos/*",
+        "arn:aws:s3:::goswift-media-prod/media/providers/rides/vehicles/*",
+        "arn:aws:s3:::goswift-media-prod/media/providers/restaurants/photos/*",
+        "arn:aws:s3:::goswift-media-prod/media/providers/restaurants/logos/*",
+        "arn:aws:s3:::goswift-media-prod/media/providers/courier/photos/*",
+        "arn:aws:s3:::goswift-media-prod/media/providers/rentals/logos/*",
+        "arn:aws:s3:::goswift-media-prod/media/providers/properties/logos/*",
+        "arn:aws:s3:::goswift-media-prod/media/food/items/*",
+        "arn:aws:s3:::goswift-media-prod/media/car_rentals/vehicles/*",
+        "arn:aws:s3:::goswift-media-prod/media/room_services/listings/*"
+      ]
+    }
+  ]
+}
+```
+
+Do not include these private prefixes in a public-read policy:
+
+```text
+media/providers/rides/documents/*
+media/providers/restaurants/documents/*
+media/providers/courier/documents/*
+media/providers/rentals/documents/*
+media/providers/properties/documents/*
+media/support_attachments/*
+```
+
+Optional S3 CORS rule for browser access from the local frontend and EC2 frontend origin:
+
+```json
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "HEAD"],
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://YOUR_ELASTIC_IP"
+    ],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }
+]
 ```
 
 Why `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` stay blank:
@@ -1319,11 +1385,15 @@ If upload fails with `AccessDenied`:
 - confirm bucket name is correct
 - confirm bucket region matches `AWS_S3_REGION_NAME`
 
-If upload succeeds but the media URL cannot be opened:
+If upload succeeds but an image URL returns `403 Forbidden`:
 
-- remember the bucket is private
-- signed URLs may expire
-- decide later whether some public media should use CloudFront or public bucket policy
+- confirm the URL path starts with a public image prefix, for example `media/users/profile-images/`
+- confirm the bucket policy includes that exact prefix
+- confirm bucket-level `Block public access` is not preventing public bucket policies
+- confirm `AWS_STORAGE_BUCKET_NAME` and `AWS_S3_REGION_NAME` match the URL
+- test with `curl -I "https://YOUR_BUCKET.s3.YOUR_REGION.amazonaws.com/media/users/profile-images/example.jpg"`
+
+If a document URL returns `403 Forbidden`, that is expected unless you intentionally build private signed URL access for admins.
 
 ---
 
@@ -1696,3 +1766,4 @@ Security follow-ups after first successful deploy:
 - [ ] Add domain when purchased
 - [ ] Add SSL/HTTPS
 - [ ] Switch WebSockets from `ws://` to `wss://`
+
