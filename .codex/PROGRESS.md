@@ -35,6 +35,7 @@ In Progress
 - [x] Added room service foundation with providers, listing CRUD/photos, datewise availability, booking requests, pricing, provider actions, reviews, stats, and admin APIs
 - [x] Added GoSwift Docker, production compose, Nginx, env template, and GitHub Actions ECR/EC2 deployment scaffold
 - [x] Added step-by-step GoSwift AWS deployment guide for EC2, ECR, RDS, S3, Redis, Celery, Gmail SMTP, and GitHub Actions
+- [x] Added user favorites foundation with toggle/list APIs for rides, food, courier, car rentals, and properties
 
 ---
 
@@ -69,7 +70,7 @@ After the foundation is stable:
 - [x] Provider structure
 - [x] Provider onboarding foundation
 - [x] SuperAdmin approval foundation
-- [ ] Favorites
+- [x] Favorites
 - [x] Ratings / reviews
 - [ ] Payment-method foundation
 - [ ] File/media handling

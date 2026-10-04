@@ -286,3 +286,295 @@ class ChangePasswordView(APIView):
         user.save(update_fields=['password', 'updated_at'])
         logger.info('Password changed for user %s', user.email)
         return Response({'detail': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+
+from apps.car_rentals.models import RentalVehicle
+from apps.food.models import FoodItem
+from apps.providers.models import (
+    CourierProviderProfile,
+    ProviderOnboardingStatus,
+    RentalProviderProfile,
+    RestaurantProviderProfile,
+    RideProviderProfile,
+)
+from apps.room_services.models import PropertyListing
+from .models import (
+    UserFavoriteCourierProvider,
+    UserFavoriteFoodItem,
+    UserFavoritePropertyListing,
+    UserFavoriteRentalVehicle,
+    UserFavoriteRideProvider,
+)
+from .serializers import FavoriteListResponseSerializer, FavoriteServiceType, FavoriteToggleResponseSerializer, FavoriteToggleSerializer
+
+
+def _file_url(request, file_field):
+    if not file_field:
+        return None
+    try:
+        url = file_field.url
+    except ValueError:
+        return None
+    return request.build_absolute_uri(url) if request else url
+
+
+def _provider_summary(request, provider, image_field_name):
+    return {
+        'id': provider.id,
+        'display_name': provider.display_name,
+        'business_name': provider.business_name,
+        'service_category': provider.service_category,
+        'image': _file_url(request, getattr(provider, image_field_name, None)),
+        'is_active': provider.is_active,
+    }
+
+
+def _ride_favorite_payload(request, favorite):
+    provider = favorite.provider
+    return {
+        'favorite_id': favorite.id,
+        'favorited_at': favorite.created_at,
+        'id': provider.id,
+        'legal_name': provider.legal_name,
+        'display_name': provider.display_name,
+        'business_name': provider.business_name,
+        'service_category': provider.service_category,
+        'profile_photo': _file_url(request, provider.profile_photo),
+        'vehicle_image': _file_url(request, provider.vehicle_image),
+        'vehicle_category': provider.vehicle_category,
+        'vehicle_make': provider.vehicle_make,
+        'vehicle_model': provider.vehicle_model,
+        'vehicle_year': provider.vehicle_year,
+        'seat_capacity': provider.seat_capacity,
+        'online_accepting_requests': provider.online_accepting_requests,
+        'is_active': provider.is_active,
+    }
+
+
+def _food_favorite_payload(request, favorite):
+    item = favorite.food_item
+    restaurant = item.restaurant
+    return {
+        'favorite_id': favorite.id,
+        'favorited_at': favorite.created_at,
+        'id': item.id,
+        'photo': _file_url(request, item.photo),
+        'name': item.name,
+        'culinary_description': item.culinary_description,
+        'price': item.price,
+        'currency': item.currency,
+        'estimated_prep_window': item.estimated_prep_window,
+        'dietary_tags': item.dietary_tags,
+        'available_today': item.available_today,
+        'is_active': item.is_active,
+        'category': {
+            'id': item.category_id,
+            'name': item.category.name,
+        },
+        'restaurant': {
+            'id': restaurant.id,
+            'restaurant_name': restaurant.restaurant_name,
+            'display_name': restaurant.display_name,
+            'service_category': restaurant.service_category,
+            'restaurant_photo': _file_url(request, restaurant.restaurant_photo),
+            'logo': _file_url(request, restaurant.logo),
+            'cuisine_concept': restaurant.cuisine_concept,
+            'island_service_hub': restaurant.island_service_hub,
+            'accepting_orders': restaurant.accepting_orders,
+            'is_active': restaurant.is_active,
+        },
+    }
+
+
+def _courier_favorite_payload(request, favorite):
+    provider = favorite.provider
+    return {
+        'favorite_id': favorite.id,
+        'favorited_at': favorite.created_at,
+        'id': provider.id,
+        'legal_name': provider.legal_name,
+        'display_name': provider.display_name,
+        'business_name': provider.business_name,
+        'service_category': provider.service_category,
+        'profile_photo': _file_url(request, provider.profile_photo),
+        'operating_island_zone': provider.operating_island_zone,
+        'transport_mode': provider.transport_mode,
+        'online_accepting_dispatch': provider.online_accepting_dispatch,
+        'is_active': provider.is_active,
+    }
+
+
+def _vehicle_cover_url(request, vehicle):
+    media_items = list(vehicle.media.all())
+    if not media_items:
+        return None
+    return _file_url(request, media_items[0].image)
+
+
+def _rental_favorite_payload(request, favorite):
+    vehicle = favorite.vehicle
+    provider = vehicle.provider
+    return {
+        'favorite_id': favorite.id,
+        'favorited_at': favorite.created_at,
+        'id': vehicle.id,
+        'cover_image': _vehicle_cover_url(request, vehicle),
+        'name': vehicle.name,
+        'make': vehicle.make,
+        'model': vehicle.model,
+        'year': vehicle.year,
+        'category': vehicle.category,
+        'seating_capacity': vehicle.seating_capacity,
+        'luggage_capacity': vehicle.luggage_capacity,
+        'transmission': vehicle.transmission,
+        'fuel_type': vehicle.fuel_type,
+        'location': vehicle.location,
+        'daily_rate': vehicle.daily_rate,
+        'currency': vehicle.currency,
+        'security_escrow_deposit': vehicle.security_escrow_deposit,
+        'pre_auth_amount': vehicle.pre_auth_amount,
+        'minimum_rental_period_days': vehicle.minimum_rental_period_days,
+        'available': vehicle.available,
+        'provider': _provider_summary(request, provider, 'logo'),
+    }
+
+
+def _listing_cover_url(request, listing):
+    photos = list(listing.photos.all())
+    cover = next((photo for photo in photos if photo.is_cover), None) or (photos[0] if photos else None)
+    return _file_url(request, cover.image) if cover else None
+
+
+def _property_favorite_payload(request, favorite):
+    listing = favorite.listing
+    provider = listing.provider
+    return {
+        'favorite_id': favorite.id,
+        'favorited_at': favorite.created_at,
+        'id': listing.id,
+        'cover_image': _listing_cover_url(request, listing),
+        'title': listing.title,
+        'description': listing.description,
+        'bedrooms': listing.bedrooms,
+        'bathrooms': listing.bathrooms,
+        'max_guests': listing.max_guests,
+        'island_region': listing.island_region,
+        'street_address': listing.street_address,
+        'gated_community': listing.gated_community,
+        'latitude': listing.latitude,
+        'longitude': listing.longitude,
+        'nightly_base_rate': listing.nightly_base_rate,
+        'currency': listing.currency,
+        'minimum_stay_nights': listing.minimum_stay_nights,
+        'cleaning_fee': listing.cleaning_fee,
+        'security_damage_deposit': listing.security_damage_deposit,
+        'amenities': listing.amenities,
+        'is_active': listing.is_active,
+        'provider': _provider_summary(request, provider, 'logo'),
+    }
+
+
+@extend_schema(
+    tags=['Users - Favorites'],
+    summary='List my favorite service items',
+    description='Returns five separate arrays: rides, food, courier, car_rentals, and properties.',
+    responses={200: FavoriteListResponseSerializer},
+)
+class FavoriteListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        rides = UserFavoriteRideProvider.objects.select_related('provider').filter(user=request.user)
+        food = UserFavoriteFoodItem.objects.select_related('food_item', 'food_item__category', 'food_item__restaurant').filter(user=request.user)
+        courier = UserFavoriteCourierProvider.objects.select_related('provider').filter(user=request.user)
+        car_rentals = UserFavoriteRentalVehicle.objects.select_related('vehicle', 'vehicle__provider').prefetch_related('vehicle__media').filter(user=request.user)
+        properties = UserFavoritePropertyListing.objects.select_related('listing', 'listing__provider').prefetch_related('listing__photos').filter(user=request.user)
+
+        return Response({
+            'rides': [_ride_favorite_payload(request, favorite) for favorite in rides],
+            'food': [_food_favorite_payload(request, favorite) for favorite in food],
+            'courier': [_courier_favorite_payload(request, favorite) for favorite in courier],
+            'car_rentals': [_rental_favorite_payload(request, favorite) for favorite in car_rentals],
+            'properties': [_property_favorite_payload(request, favorite) for favorite in properties],
+        })
+
+
+@extend_schema(
+    tags=['Users - Favorites'],
+    summary='Toggle a favorite service item',
+    description='Adds the favorite if it does not exist; removes it if it already exists.',
+    request=FavoriteToggleSerializer,
+    responses={200: FavoriteToggleResponseSerializer, 404: OpenApiResponse(description='Target item was not found')},
+)
+class FavoriteToggleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = FavoriteToggleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service_type = serializer.validated_data['service_type']
+        object_id = serializer.validated_data['object_id']
+
+        favorite_model, favorite_field, target = self._resolve_target(service_type, object_id)
+        if target is None:
+            return Response({'detail': 'Favorite target was not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        lookup = {'user': request.user, favorite_field: target}
+        favorite = favorite_model.objects.filter(**lookup).first()
+        if favorite:
+            favorite.delete()
+            return Response({
+                'detail': 'Removed from favorites.',
+                'service_type': service_type,
+                'object_id': object_id,
+                'is_favorited': False,
+            })
+
+        favorite_model.objects.create(**lookup)
+        return Response({
+            'detail': 'Added to favorites.',
+            'service_type': service_type,
+            'object_id': object_id,
+            'is_favorited': True,
+        }, status=status.HTTP_200_OK)
+
+    def _resolve_target(self, service_type, object_id):
+        if service_type == FavoriteServiceType.RIDES:
+            target = RideProviderProfile.objects.filter(
+                pk=object_id,
+                onboarding_status=ProviderOnboardingStatus.COMPLETED,
+                is_active=True,
+            ).first()
+            return UserFavoriteRideProvider, 'provider', target
+
+        if service_type == FavoriteServiceType.FOOD:
+            target = FoodItem.objects.select_related('restaurant').filter(
+                pk=object_id,
+                is_active=True,
+                restaurant__onboarding_status=ProviderOnboardingStatus.COMPLETED,
+                restaurant__is_active=True,
+            ).first()
+            return UserFavoriteFoodItem, 'food_item', target
+
+        if service_type == FavoriteServiceType.COURIER:
+            target = CourierProviderProfile.objects.filter(
+                pk=object_id,
+                onboarding_status=ProviderOnboardingStatus.COMPLETED,
+                is_active=True,
+            ).first()
+            return UserFavoriteCourierProvider, 'provider', target
+
+        if service_type == FavoriteServiceType.CAR_RENTALS:
+            target = RentalVehicle.objects.select_related('provider').filter(
+                pk=object_id,
+                provider__onboarding_status=ProviderOnboardingStatus.COMPLETED,
+                provider__is_active=True,
+            ).first()
+            return UserFavoriteRentalVehicle, 'vehicle', target
+
+        target = PropertyListing.objects.select_related('provider').filter(
+            pk=object_id,
+            is_active=True,
+            provider__onboarding_status=ProviderOnboardingStatus.COMPLETED,
+            provider__is_active=True,
+        ).first()
+        return UserFavoritePropertyListing, 'listing', target

@@ -88,3 +88,97 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.full_name or self.email
+
+class UserFavoriteRideProvider(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='favorite_ride_providers')
+    provider = models.ForeignKey('providers.RideProviderProfile', on_delete=models.CASCADE, related_name='favorited_by_users')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'provider'], name='unique_user_favorite_ride_provider'),
+        ]
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['provider', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} favorite ride provider {self.provider_id}'
+
+
+class UserFavoriteFoodItem(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='favorite_food_items')
+    food_item = models.ForeignKey('food.FoodItem', on_delete=models.CASCADE, related_name='favorited_by_users')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'food_item'], name='unique_user_favorite_food_item'),
+        ]
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['food_item', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} favorite food item {self.food_item_id}'
+
+
+class UserFavoriteCourierProvider(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='favorite_courier_providers')
+    provider = models.ForeignKey('providers.CourierProviderProfile', on_delete=models.CASCADE, related_name='favorited_by_users')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'provider'], name='unique_user_favorite_courier_provider'),
+        ]
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['provider', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} favorite courier provider {self.provider_id}'
+
+
+class UserFavoriteRentalVehicle(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='favorite_rental_vehicles')
+    vehicle = models.ForeignKey('car_rentals.RentalVehicle', on_delete=models.CASCADE, related_name='favorited_by_users')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'vehicle'], name='unique_user_favorite_rental_vehicle'),
+        ]
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['vehicle', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} favorite rental vehicle {self.vehicle_id}'
+
+
+class UserFavoritePropertyListing(models.Model):
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='favorite_property_listings')
+    listing = models.ForeignKey('room_services.PropertyListing', on_delete=models.CASCADE, related_name='favorited_by_users')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'listing'], name='unique_user_favorite_property_listing'),
+        ]
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['listing', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.user_id} favorite property listing {self.listing_id}'
