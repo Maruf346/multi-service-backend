@@ -10,12 +10,12 @@ from .serializers import *
 from .models import *
 import logging
 from django.utils.decorators import method_decorator
-from notifications.services import NotificationTemplates
+from apps.notifications.services import NotificationTemplates
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from django.shortcuts import get_object_or_404
 
-from apps.users.permissions import IsAdmin
+from apps.users.permissions import IsSuperAdmin
 
 
 
@@ -59,4 +59,4 @@ class SupportTicketAdminViewSet(viewsets.ModelViewSet):
     """Admin can CRUD all support tickets"""
     queryset = SupportTicket.objects.all()
     serializer_class = SupportTicketAdminSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [IsSuperAdmin]

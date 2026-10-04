@@ -31,6 +31,9 @@ urlpatterns = [
     # Notifications
     path('notifications/', include('apps.notifications.urls')),
 
+    # Support Tickets
+    path('supports/', include(('apps.supports.urls', 'supports'), namespace='supports')),
+    
     # API schema and documentation
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
