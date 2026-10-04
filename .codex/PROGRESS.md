@@ -180,6 +180,8 @@ None.
 
 # Notes
 
+- 2026-10-04: Added graceful ClientError handling for user and SuperAdmin profile image uploads so S3 bucket misconfiguration returns a 400 detail instead of a 500. Local syntax and Django checks passed.
+
 - users model changes are ready for review, but migrations have not been generated or applied yet by request.
 - notifications model changes are ready for review; migration dry-run reports a pending initial notifications migration.
 - Service-provider-specific profile and onboarding data should be added later in dedicated service/profile apps instead of expanding the base `users` app.

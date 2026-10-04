@@ -1,4 +1,5 @@
 import logging
+from botocore.exceptions import ClientError
 from django.shortcuts import get_object_or_404
 
 from drf_spectacular.utils import OpenApiResponse, extend_schema, inline_serializer
@@ -29,6 +30,14 @@ from .serializers import (
 from .services import PasswordResetService, RegistrationService
 
 logger = logging.getLogger(__name__)
+
+
+def _storage_error_response(exc):
+    message = exc.response.get('Error', {}).get('Message', str(exc))
+    return Response(
+        {'detail': f'File upload failed: {message}'},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
 
 
 @extend_schema(
@@ -258,7 +267,10 @@ class UpdateProfileView(APIView):
     def patch(self, request):
         serializer = UpdateProfileSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer.save()
+        except ClientError as exc:
+            return _storage_error_response(exc)
         return Response(UserPublicSerializer(request.user, context={'request': request}).data)
 
 
@@ -694,5 +706,8 @@ class SuperAdminProfileView(APIView):
     def patch(self, request):
         serializer = SuperAdminProfileUpdateSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer.save()
+        except ClientError as exc:
+            return _storage_error_response(exc)
         return Response(AdminUserSerializer(request.user, context={'request': request}).data)
