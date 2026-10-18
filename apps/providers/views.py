@@ -327,7 +327,9 @@ class SuperAdminTypedProviderProfileListView(APIView):
     def get_queryset(self, request):
         queryset = self.model_class.objects.select_related('user', 'reviewed_by').order_by('-created_at')
 
-        onboarding_status = (request.query_params.get('onboarding_status') or self.default_onboarding_status or '').strip()
+        onboarding_status = (request.query_params.get('onboarding_status') or self.default_onboarding_status or '').strip().lower()
+        if onboarding_status in ('all', 'any'):
+            onboarding_status = ''
         if onboarding_status:
             queryset = queryset.filter(onboarding_status=onboarding_status)
 
@@ -546,7 +548,9 @@ class SuperAdminProviderProfileListView(APIView):
             if not model_class or not serializer_class:
                 continue
             queryset = model_class.objects.select_related('user', 'reviewed_by').order_by('-created_at')
-            onboarding_status = (request.query_params.get('onboarding_status') or self.default_onboarding_status or '').strip()
+            onboarding_status = (request.query_params.get('onboarding_status') or self.default_onboarding_status or '').strip().lower()
+            if onboarding_status in ('all', 'any'):
+                onboarding_status = ''
             if onboarding_status:
                 queryset = queryset.filter(onboarding_status=onboarding_status)
             is_active = request.query_params.get('is_active')
@@ -733,65 +737,95 @@ class SuperAdminPropertyProviderRejectView(SuperAdminFixedProviderRejectView):
     get=extend_schema(
         tags=['Providers - SuperAdmin'],
         operation_id='admin_list_incoming_ride_provider_requests',
-        summary='List incoming ride provider approval requests',
-        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        summary='List ride provider records for provider management',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+            OpenApiParameter('page', int, required=False),
+            OpenApiParameter('page_size', int, required=False),
+        ],
         responses={200: RideProviderProfileListResponseSerializer},
     )
 )
 class SuperAdminRideProviderRequestListView(SuperAdminRideProviderProfileListView):
-    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+    default_onboarding_status = ''
 
 
 @extend_schema_view(
     get=extend_schema(
         tags=['Providers - SuperAdmin'],
         operation_id='admin_list_incoming_restaurant_provider_requests',
-        summary='List incoming restaurant provider approval requests',
-        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        summary='List restaurant provider records for provider management',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+            OpenApiParameter('page', int, required=False),
+            OpenApiParameter('page_size', int, required=False),
+        ],
         responses={200: RestaurantProviderProfileListResponseSerializer},
     )
 )
 class SuperAdminRestaurantProviderRequestListView(SuperAdminRestaurantProviderProfileListView):
-    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+    default_onboarding_status = ''
 
 
 @extend_schema_view(
     get=extend_schema(
         tags=['Providers - SuperAdmin'],
         operation_id='admin_list_incoming_courier_provider_requests',
-        summary='List incoming courier provider approval requests',
-        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        summary='List courier provider records for provider management',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+            OpenApiParameter('page', int, required=False),
+            OpenApiParameter('page_size', int, required=False),
+        ],
         responses={200: CourierProviderProfileListResponseSerializer},
     )
 )
 class SuperAdminCourierProviderRequestListView(SuperAdminCourierProviderProfileListView):
-    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+    default_onboarding_status = ''
 
 
 @extend_schema_view(
     get=extend_schema(
         tags=['Providers - SuperAdmin'],
         operation_id='admin_list_incoming_rental_provider_requests',
-        summary='List incoming car rental provider approval requests',
-        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        summary='List car rental provider records for provider management',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+            OpenApiParameter('page', int, required=False),
+            OpenApiParameter('page_size', int, required=False),
+        ],
         responses={200: RentalProviderProfileListResponseSerializer},
     )
 )
 class SuperAdminRentalProviderRequestListView(SuperAdminRentalProviderProfileListView):
-    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+    default_onboarding_status = ''
 
 
 @extend_schema_view(
     get=extend_schema(
         tags=['Providers - SuperAdmin'],
         operation_id='admin_list_incoming_property_provider_requests',
-        summary='List incoming property provider approval requests',
-        parameters=[OpenApiParameter('is_active', bool, required=False), OpenApiParameter('search', str, required=False), OpenApiParameter('page', int, required=False), OpenApiParameter('page_size', int, required=False)],
+        summary='List property provider records for provider management',
+        parameters=[
+            OpenApiParameter('onboarding_status', str, enum=[choice.value for choice in ProviderOnboardingStatus], required=False),
+            OpenApiParameter('is_active', bool, required=False),
+            OpenApiParameter('search', str, required=False),
+            OpenApiParameter('page', int, required=False),
+            OpenApiParameter('page_size', int, required=False),
+        ],
         responses={200: PropertyProviderProfileListResponseSerializer},
     )
 )
 class SuperAdminPropertyProviderRequestListView(SuperAdminPropertyProviderProfileListView):
-    default_onboarding_status = ProviderOnboardingStatus.SUBMITTED
+    default_onboarding_status = ''
 class SuperAdminRideProviderRequestDetailView(SuperAdminRideProviderProfileDetailView):
     @extend_schema(tags=['Providers - SuperAdmin'], operation_id='admin_retrieve_ride_provider_request', summary='Retrieve incoming ride provider approval request', responses={200: RideProviderProfileSerializer, 404: DetailSerializer})
     def get(self, request, pk):
