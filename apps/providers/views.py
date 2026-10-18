@@ -119,8 +119,6 @@ class ProviderTypedProfileView(APIView):
 
     def patch(self, request):
         existing = self.get_existing(request.user)
-        if existing and existing.onboarding_status == ProviderOnboardingStatus.COMPLETED:
-            return Response({'detail': 'Completed provider profiles cannot be edited here.'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer_class = self.get_write_serializer()
         serializer = serializer_class(existing, data=request.data, partial=True, context={'request': request})
@@ -168,7 +166,7 @@ class ProviderTypedSubmitView(APIView):
             return Response({'detail': getattr(exc, 'message', str(exc))}, status=status.HTTP_400_BAD_REQUEST)
         response_serializer = PROVIDER_SERIALIZERS[self.service_category]
         return Response({
-            'detail': 'Provider profile submitted for approval.',
+            'detail': 'Provider profile saved and approved.',
             'provider': response_serializer(profile, context={'request': request}).data,
         })
 

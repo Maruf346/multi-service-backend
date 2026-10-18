@@ -180,6 +180,8 @@ None.
 
 # Notes
 
+- 2026-10-18: Changed provider onboarding policy so provider profiles default to approved/completed, submit auto-approves, approved providers can still update their own profile, and migration 0003 updates existing provider profiles to completed. Checks passed.
+
 - 2026-10-18: Updated provider management request list endpoints so omitted onboarding_status returns all category provider profiles instead of only submitted profiles; Swagger now documents onboarding_status on these endpoints. Django check passed.
 
 - 2026-10-04: Fixed invalid CORS default in settings and documented the S3-hosted admin dashboard origin for production CORS/CSRF configuration. Django system check passed.
@@ -206,5 +208,6 @@ None.
 # Current Development Target
 
 **Establish and verify the Django backend foundation before beginning the service-specific modules.**
+
 
 

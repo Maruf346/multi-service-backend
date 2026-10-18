@@ -59,7 +59,7 @@ class AbstractProviderProfile(models.Model):
     onboarding_status = models.CharField(
         max_length=32,
         choices=ProviderOnboardingStatus.choices,
-        default=ProviderOnboardingStatus.INCOMPLETE,
+        default=ProviderOnboardingStatus.COMPLETED,
     )
     submitted_at = models.DateTimeField(null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -120,9 +120,9 @@ class AbstractProviderProfile(models.Model):
 
     def submit_for_review(self):
         self.validate_ready_for_submission()
-        self.onboarding_status = ProviderOnboardingStatus.SUBMITTED
+        self.onboarding_status = ProviderOnboardingStatus.COMPLETED
         self.submitted_at = timezone.now()
-        self.reviewed_at = None
+        self.reviewed_at = timezone.now()
         self.reviewed_by = None
         self.review_note = ''
         self.save(update_fields=['onboarding_status', 'submitted_at', 'reviewed_at', 'reviewed_by', 'review_note', 'updated_at'])
